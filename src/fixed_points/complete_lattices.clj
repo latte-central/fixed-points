@@ -517,21 +517,24 @@
 ;; @@
 (proof inv-lub :script
    (assume [X (set T)
-            l T
-            Hl (glb T R X l)]
+            u T
+            Hu (lub T R X u)]
       (have R' _ :by (inverse-rel T R))
-      (have a1 (lower-bound T R X l) :by (p/%and-elim-left Hl))
-      (have a (upper-bound T R' X l) :by ((inv-lower-bound T R) X l a1))
+      (have a1 (upper-bound T R X u) :by (p/%and-elim-left Hu))
+      (have a (lower-bound T R' X u) :by ((inv-upper-bound T R) X u a1))
       (assume [x T
-               Hx (upper-bound T R' X x)]
-         (have b1 (R' l x) :by ((p/%and-elim-right Hl) x Hx))
+               Hx (lower-bound T R' X x)]
+         (have b1 (R' x u) :by ((p/%and-elim-right Hu) x Hx))
          (have b _ :discharge [x Hx b1]))
-      (have c _ :by ((p/and-intro (upper-bound T R' X l)
+      (have c _ :by ((p/and-intro (lower-bound T R' X u)
                                   (forall [x T]
-                                     (==> (upper-bound T R' X x)
-                                          (R' l x)))) a b))
+                                     (==> (lower-bound T R' X x)
+                                          (R' x u)))) a b))
       (qed c)))
 ;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>inv-lub</span>","value":"inv-lub"}],"value":"[:qed inv-lub]"}
+;; <=
 
 ;; **
 ;;; An important property of the `lub` and `glb` is that if they exist, then they are unique. The only constraint is that of antisymmetry.
@@ -643,7 +646,7 @@
 ;; <=
 
 ;; **
-;;; For the least upper bounds let's exploit the duality reasoning in the proofs.
+;;; For the least upper bounds let's exploit the duality reasoning in the *singleness* proof.
 ;; **
 
 ;; @@
@@ -663,30 +666,17 @@
       (have R' _ :by (inverse-rel T R))
       (have H' (antisymmetric T R') :by ((inv-antisym T R) H))
       (have a (q/single T (lambda [u T] (glb T R' X u)))
-            :by ((glb-single T R' X) H'))     
+            :by ((glb-single T R' X) H'))
       (assume [u1 T
                u2 T
                Hu1 (lub T R X u1)
                Hu2 (lub T R X u2)]
-         (have b (glb T R' X u1) :by ((inv-lower-bound T R) X)
-         (have b (equal T u1 u2) :by (a u1 u2 Hu1 Hu2))     
-           )))
-;; @@
-
-;; @@
-(proof lub-single :script
-   (assume [H (antisymmetric T R)
-            u1 T
-            u2 T
-            H1 (lub T R X u1)
-            H2 (lub T R X u2)]
-      (have a (upper-bound T R X u1) :by (p/%and-elim-left H1))
-      (have b (upper-bound T R X u2) :by (p/%and-elim-left H2))
-      (have c (R u1 u2) :by ((p/%and-elim-right H1) u2 b))
-      (have d (R u2 u1) :by ((p/%and-elim-right H2) u1 a))
-      (have e (equal T u1 u2) :by (H u1 u2 c d))
-      (have f _ :discharge [u1 u2 H1 H2 e])
-      (qed f)))
+         (have b (glb T R' X u1) :by ((inv-lub T R) X u1 Hu1))
+         (have c (glb T R' X u2) :by ((inv-lub T R) X u2 Hu2))
+         (have d (equal T u1 u2) :by (a u1 u2 b c))
+         (have e (q/single T (lambda [u T] (lub T R X u)))
+               :discharge [u1 u2 Hu1 Hu2 d]))
+       (qed e)))
 ;; @@
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>lub-single</span>","value":"lub-single"}],"value":"[:qed lub-single]"}
@@ -703,6 +693,10 @@
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>lub-unique</span>","value":"lub-unique"}],"value":"[:declared :theorem lub-unique]"}
 ;; <=
+
+;; **
+;;; For unicity it's quick enough to go the direct way.
+;; **
 
 ;; @@
 (proof lub-unique :script
@@ -728,7 +722,7 @@
 ;; **
 ;;; ## Complete lattices
 ;;; 
-;;; The **complete lattices** are particularly well-behaved ordering relation wrt. the least upper and greatest lower bounds. All their subsets have `glb`'s and `lub`'s. However, as we'll see, it is enough to have "only" `glb`'s or `lub`'s for the definition to hold. Because the least fixed points are somewhat more common in practice we take the `lub` road (but this is somewhat an arbitrary choice, as we will make clear later on).
+;;; The **complete lattices** are particularly well-behaved ordering relation wrt. the least upper and greatest lower bounds. All their subsets have `glb`'s and `lub`'s. However, as we'll see, it is enough to have "only" `glb`'s or `lub`'s for the definition to hold. Because the least fixed points are somewhat more common in practice we take the `glb` road (but this is somewhat an arbitrary choice, as we will make clear later on).
 ;; **
 
 ;; @@
@@ -737,12 +731,280 @@
   [[T :type] [R (rel T)]]
   (and (order T R)
        (forall [X (set T)]
-          (exists [u T]
-             (lub T R X u)))))
+          (exists [l T] (glb T R X l)))))
 ;; @@
+;; ->
+;;; [Warning] redefinition as term:  complete-lattice
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>complete-lattice</span>","value":"complete-lattice"}],"value":"[:defined :term complete-lattice]"}
 ;; <=
+
+;; **
+;;; Let's check that going the `lub` road is equivalent.
+;; **
+
+;; @@
+(defthm all-glb-all-lub
+  "Having all glb's implies having all lub's."
+  [[T :type] [R (rel T)]]
+  (==> (antisymmetric T R)
+       (forall [X (set T)]
+         (exists [l T] (glb T R X l)))
+       (forall [X (set T)]
+         (exists [u T] (lub T R X u)))))
+;; @@
+;; ->
+;;; [Warning] redefinition as theorem:  all-glb-all-lub
+;;; 
+;; <-
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>all-glb-all-lub</span>","value":"all-glb-all-lub"}],"value":"[:declared :theorem all-glb-all-lub]"}
+;; <=
+
+;; @@
+(proof all-glb-all-lub :script
+   (assume [H1 (antisymmetric T R)
+            H2 (forall [X (set T)]
+                 (exists [l T] (glb T R X l)))]
+      (assume [X (set T)]
+        (have Y _ :by (lambda [u T] (upper-bound T R X u)))
+        (have <a> (exists [l T] (glb T R Y l)) :by (H2 Y))
+        (have glbY-unique _ :by ((glb-unique T R Y) H1 <a>))
+        (have glbY T :by (q/the T (lambda [l T] (glb T R Y l)) glbY-unique))
+        (showterm glbY)
+        (have <b> (glb T R Y glbY) :by (q/the-prop T (lambda [l T] (glb T R Y l)) glbY-unique))
+        ;(showterm <b>)
+
+              (assume [x T
+                       Hx (elem T x X)]
+                      
+                 ;; let's show that assuming an y in Y then (R x y)
+                  
+                 (assume [y T
+                          Hy (elem T y Y)]
+                    (have <c1> (upper-bound T R X y) :by Hy)
+                    (have <c2> (R x y) :by (<c1> x Hx))
+                    (have <c> (lower-bound T R Y x) :discharge [y Hy <c2>]))
+                      
+                  (have <d1> (forall [z T]
+                                 (==> (lower-bound T R Y z)
+                                      (R z glbY))) :by ((p/and-elim-right (lower-bound T R Y glbY)
+                                                                          (forall [z T] (==> (lower-bound T R Y z)
+                                                                                             (R z glbY)))) <b>))
+                  ;(showterm <d1>)
+                  ;(showterm x)
+                  ;(have <d2> (==> (lower-bound T R Y x)
+                  ;                (R x glbY)) :by (<d1> x))))))
+                  (have <d2> _ :by (<d1> x))
+                  (showterm <d2>)))))
+                 ;; (have <d> (R x glbY) :by 
+                      
+                      ;; to show : (lub T R X glbY)
+              ;; hence, to show 1: (upper-bound T R X glbY)
+                      
+                 ;;(have <b> (R x glbY) )
+              
+         ;     )))
+;; @@
+;; ->
+;;; [showterm] glbY
+;;; -----------------------------------------
+;;; (#&#x27;latte.quant/the
+;;;  T
+;;;  (λ
+;;;   [l T]
+;;;   (Π
+;;;    [C ✳]
+;;;    (Π
+;;;     [⇧
+;;;      (Π
+;;;       [⇧
+;;;        (Π
+;;;         [x&#x27; T]
+;;;         (Π [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;]))] [[R l] x&#x27;]))]
+;;;       (Π
+;;;        [⇧
+;;;         (Π
+;;;          [x&#x27; T]
+;;;          (Π
+;;;           [⇧
+;;;            (Π
+;;;             [x&#x27;&#x27; T]
+;;;             (Π [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;&#x27;]))] [[R x&#x27;] x&#x27;&#x27;]))]
+;;;           [[R x&#x27;] l]))]
+;;;        C))]
+;;;     C)))
+;;;  [[(#&#x27;fixed-points.complete-lattices/glb-unique
+;;;     T
+;;;     R
+;;;     (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u]))))
+;;;    H1]
+;;;   [H2 (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u])))]])
+;;; ::T
+;;; -----------------------------------------
+;;; [showterm] &lt;d2&gt;
+;;; -----------------------------------------
+;;; [[(#&#x27;latte.prop/and-elim-right
+;;;    (Π
+;;;     [x&#x27;&#x27;&#x27; T]
+;;;     (Π
+;;;      [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;&#x27;&#x27;]))]
+;;;      [[R
+;;;        (#&#x27;latte.quant/the
+;;;         T
+;;;         (λ
+;;;          [l T]
+;;;          (Π
+;;;           [C ✳]
+;;;           (Π
+;;;            [⇧
+;;;             (Π
+;;;              [⇧
+;;;               (Π
+;;;                [x&#x27; T]
+;;;                (Π [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;]))] [[R l] x&#x27;]))]
+;;;              (Π
+;;;               [⇧
+;;;                (Π
+;;;                 [x&#x27; T]
+;;;                 (Π
+;;;                  [⇧
+;;;                   (Π
+;;;                    [x&#x27;&#x27; T]
+;;;                    (Π
+;;;                     [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;&#x27;]))]
+;;;                     [[R x&#x27;] x&#x27;&#x27;]))]
+;;;                  [[R x&#x27;] l]))]
+;;;               C))]
+;;;            C)))
+;;;         [[(#&#x27;fixed-points.complete-lattices/glb-unique
+;;;            T
+;;;            R
+;;;            (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u]))))
+;;;           H1]
+;;;          [H2 (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u])))]])]
+;;;       x&#x27;&#x27;&#x27;]))
+;;;    (Π
+;;;     [z T]
+;;;     (Π
+;;;      [⇧
+;;;       (Π [x&#x27; T] (Π [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;]))] [[R z] x&#x27;]))]
+;;;      [[R z]
+;;;       (#&#x27;latte.quant/the
+;;;        T
+;;;        (λ
+;;;         [l T]
+;;;         (Π
+;;;          [C ✳]
+;;;          (Π
+;;;           [⇧
+;;;            (Π
+;;;             [⇧
+;;;              (Π
+;;;               [x&#x27; T]
+;;;               (Π [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;]))] [[R l] x&#x27;]))]
+;;;             (Π
+;;;              [⇧
+;;;               (Π
+;;;                [x&#x27; T]
+;;;                (Π
+;;;                 [⇧
+;;;                  (Π
+;;;                   [x&#x27;&#x27; T]
+;;;                   (Π
+;;;                    [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;&#x27;]))]
+;;;                    [[R x&#x27;] x&#x27;&#x27;]))]
+;;;                 [[R x&#x27;] l]))]
+;;;              C))]
+;;;           C)))
+;;;        [[(#&#x27;fixed-points.complete-lattices/glb-unique
+;;;           T
+;;;           R
+;;;           (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u]))))
+;;;          H1]
+;;;         [H2 (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u])))]])])))
+;;;   (#&#x27;latte.quant/the-prop
+;;;    T
+;;;    (λ
+;;;     [l T]
+;;;     (Π
+;;;      [C ✳]
+;;;      (Π
+;;;       [⇧
+;;;        (Π
+;;;         [⇧
+;;;          (Π
+;;;           [x&#x27; T]
+;;;           (Π [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;]))] [[R l] x&#x27;]))]
+;;;         (Π
+;;;          [⇧
+;;;           (Π
+;;;            [x&#x27; T]
+;;;            (Π
+;;;             [⇧
+;;;              (Π
+;;;               [x&#x27;&#x27; T]
+;;;               (Π
+;;;                [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;&#x27;]))]
+;;;                [[R x&#x27;] x&#x27;&#x27;]))]
+;;;             [[R x&#x27;] l]))]
+;;;          C))]
+;;;       C)))
+;;;    [[(#&#x27;fixed-points.complete-lattices/glb-unique
+;;;       T
+;;;       R
+;;;       (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u]))))
+;;;      H1]
+;;;     [H2 (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u])))]])]
+;;;  x]
+;;; ::(Π
+;;;  [⇧&#x27;
+;;;   (Π
+;;;    [x&#x27;&#x27;&#x27; T]
+;;;    (Π
+;;;     [⇧&#x27;&#x27; (Π [x-4 T] (Π [⇧&#x27;&#x27;&#x27; [X x-4]] [[R x-4] x&#x27;&#x27;&#x27;]))]
+;;;     [[R x] x&#x27;&#x27;&#x27;]))]
+;;;  [[R x]
+;;;   (#&#x27;latte.quant/the
+;;;    T
+;;;    (λ
+;;;     [l&#x27; T]
+;;;     (Π
+;;;      [C&#x27; ✳]
+;;;      (Π
+;;;       [⇧-4
+;;;        (Π
+;;;         [⇧-5
+;;;          (Π
+;;;           [x&#x27;&#x27;&#x27;&#x27; T]
+;;;           (Π
+;;;            [⇧-6 (Π [x-5 T] (Π [⇧-7 [X x-5]] [[R x-5] x&#x27;&#x27;&#x27;&#x27;]))]
+;;;            [[R l&#x27;] x&#x27;&#x27;&#x27;&#x27;]))]
+;;;         (Π
+;;;          [⇧-8
+;;;           (Π
+;;;            [x&#x27;-4 T]
+;;;            (Π
+;;;             [⇧-9
+;;;              (Π
+;;;               [x&#x27;&#x27;&#x27;&#x27;&#x27; T]
+;;;               (Π
+;;;                [⇧-10 (Π [x-6 T] (Π [⇧-11 [X x-6]] [[R x-6] x&#x27;&#x27;&#x27;&#x27;&#x27;]))]
+;;;                [[R x&#x27;-4] x&#x27;&#x27;&#x27;&#x27;&#x27;]))]
+;;;             [[R x&#x27;-4] l&#x27;]))]
+;;;          C&#x27;))]
+;;;       C&#x27;)))
+;;;    [[(#&#x27;fixed-points.complete-lattices/glb-unique
+;;;       T
+;;;       R
+;;;       (λ [u&#x27; T] (Π [x-7 T] (Π [⇧-12 [X x-7]] [[R x-7] u&#x27;]))))
+;;;      H1]
+;;;     [H2 (λ [u&#x27;&#x27; T] (Π [x-8 T] (Π [⇧-13 [X x-8]] [[R x-8] u&#x27;&#x27;])))]])])
+;;; -----------------------------------------
+;;; 
+;; <-
 
 ;; **
 ;;; TODO:
