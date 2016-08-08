@@ -789,7 +789,7 @@
                                                                                              (R z glbY)))) <b>))
                   ;(showterm <d1>)
                   ;(showterm x)
-                  (showterm (<d1> x))
+                  (shownorm (<d1> x))
                   (have <d2> (==> (lower-bound T R Y x)
                                   (R x glbY)) :by (<d1> x))))))
 
