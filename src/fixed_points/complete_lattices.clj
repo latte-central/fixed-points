@@ -733,10 +733,6 @@
        (forall [X (set T)]
           (exists [l T] (glb T R X l)))))
 ;; @@
-;; ->
-;;; [Warning] redefinition as term:  complete-lattice
-;;; 
-;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>complete-lattice</span>","value":"complete-lattice"}],"value":"[:defined :term complete-lattice]"}
 ;; <=
@@ -755,10 +751,6 @@
        (forall [X (set T)]
          (exists [u T] (lub T R X u)))))
 ;; @@
-;; ->
-;;; [Warning] redefinition as theorem:  all-glb-all-lub
-;;; 
-;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>all-glb-all-lub</span>","value":"all-glb-all-lub"}],"value":"[:declared :theorem all-glb-all-lub]"}
 ;; <=
@@ -770,7 +762,9 @@
                  (exists [l T] (glb T R X l)))]
       (assume [X (set T)]
         (have Y _ :by (lambda [u T] (upper-bound T R X u)))
+        (showterm Y)
         (have <a> (exists [l T] (glb T R Y l)) :by (H2 Y))
+        (shownorm <a>)
         (have glbY-unique _ :by ((glb-unique T R Y) H1 <a>))
         (have glbY T :by (q/the T (lambda [l T] (glb T R Y l)) glbY-unique))
         (showterm glbY)
@@ -795,10 +789,10 @@
                                                                                              (R z glbY)))) <b>))
                   ;(showterm <d1>)
                   ;(showterm x)
-                  ;(have <d2> (==> (lower-bound T R Y x)
-                  ;                (R x glbY)) :by (<d1> x))))))
-                  (have <d2> _ :by (<d1> x))
-                  (showterm <d2>)))))
+                  (showterm (<d1> x))
+                  (have <d2> (==> (lower-bound T R Y x)
+                                  (R x glbY)) :by (<d1> x))))))
+
                  ;; (have <d> (R x glbY) :by 
                       
                       ;; to show : (lub T R X glbY)
@@ -806,202 +800,150 @@
                       
                  ;;(have <b> (R x glbY) )
               
-         ;     )))
+                                        ;     )))
+
+;; Y = (lambda [u T]
+;;       (upper-bound T R X u))
+
+;; (lower-bound T R Y z) =
+;;   (forall [x''' T]
+;;     (==> (elem T x''' Y)
+;;          (R z x''')))
+;; = (forall [x''' T]
+;;     (==> (Y x''')
+;;          (R z x''')))
+;; = (forall [x''' T]
+;;     (==> (upper-bound T R X x''')
+;;          (R z x''')))
+;; = (forall [x''' T]
+;;     (==> (forall [x-4 T]
+;;            (==> (elem T x-4 X)
+;;                 (R x-4 x''')))
+;;          (R z x''')))
+;; = (forall [x''' T]
+;;     (==> (forall [x-4 T]
+;;            (==> (X x-x4)
+;;                 (R x-4 x''')))
+;;          (R z x''')))
+
+;; type(<d1>) = (forall [z T]
+;;                (==> (forall [x''' T]
+;;                       (==> (forall [x-4 T]
+;;                              (==> (X x-4)
+;;                                   (R x-4 x''')))
+;;                            (R z x''')))
+;;                     (R z (glbY))))
+
+
+;; type(<d1> x) =
+;; (==> (forall [x''' T]
+;;        (==> (forall [x-4 T]
+;;               (==> (X x-4)
+;;                    (R x-4 x''')))
+;;             (R x x''')))
+;;      (R x glbY))
+
+
 ;; @@
 ;; ->
-;;; [showterm] glbY
+;;; [showterm] Y
 ;;; -----------------------------------------
-;;; (#&#x27;latte.quant/the
-;;;  T
-;;;  (λ
-;;;   [l T]
-;;;   (Π
-;;;    [C ✳]
-;;;    (Π
-;;;     [⇧
-;;;      (Π
-;;;       [⇧
-;;;        (Π
-;;;         [x&#x27; T]
-;;;         (Π [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;]))] [[R l] x&#x27;]))]
-;;;       (Π
-;;;        [⇧
-;;;         (Π
-;;;          [x&#x27; T]
-;;;          (Π
-;;;           [⇧
-;;;            (Π
-;;;             [x&#x27;&#x27; T]
-;;;             (Π [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;&#x27;]))] [[R x&#x27;] x&#x27;&#x27;]))]
-;;;           [[R x&#x27;] l]))]
-;;;        C))]
-;;;     C)))
-;;;  [[(#&#x27;fixed-points.complete-lattices/glb-unique
-;;;     T
-;;;     R
-;;;     (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u]))))
-;;;    H1]
-;;;   [H2 (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u])))]])
-;;; ::T
+;;; (Y)
+;;; ::(Π [u T] ✳)
 ;;; -----------------------------------------
-;;; [showterm] &lt;d2&gt;
+;;; [shownorm] &lt;a&gt;
 ;;; -----------------------------------------
-;;; [[(#&#x27;latte.prop/and-elim-right
+;;; [H2 (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u])))]
+;;; ::(Π
+;;;  [α ✳]
+;;;  (Π
+;;;   [⇧
 ;;;    (Π
-;;;     [x&#x27;&#x27;&#x27; T]
-;;;     (Π
-;;;      [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;&#x27;&#x27;]))]
-;;;      [[R
-;;;        (#&#x27;latte.quant/the
-;;;         T
-;;;         (λ
-;;;          [l T]
-;;;          (Π
-;;;           [C ✳]
-;;;           (Π
-;;;            [⇧
-;;;             (Π
-;;;              [⇧
-;;;               (Π
-;;;                [x&#x27; T]
-;;;                (Π [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;]))] [[R l] x&#x27;]))]
-;;;              (Π
-;;;               [⇧
-;;;                (Π
-;;;                 [x&#x27; T]
-;;;                 (Π
-;;;                  [⇧
-;;;                   (Π
-;;;                    [x&#x27;&#x27; T]
-;;;                    (Π
-;;;                     [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;&#x27;]))]
-;;;                     [[R x&#x27;] x&#x27;&#x27;]))]
-;;;                  [[R x&#x27;] l]))]
-;;;               C))]
-;;;            C)))
-;;;         [[(#&#x27;fixed-points.complete-lattices/glb-unique
-;;;            T
-;;;            R
-;;;            (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u]))))
-;;;           H1]
-;;;          [H2 (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u])))]])]
-;;;       x&#x27;&#x27;&#x27;]))
-;;;    (Π
-;;;     [z T]
+;;;     [x&#x27;&#x27; T]
 ;;;     (Π
 ;;;      [⇧
-;;;       (Π [x&#x27; T] (Π [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;]))] [[R z] x&#x27;]))]
-;;;      [[R z]
-;;;       (#&#x27;latte.quant/the
-;;;        T
-;;;        (λ
-;;;         [l T]
-;;;         (Π
-;;;          [C ✳]
-;;;          (Π
-;;;           [⇧
-;;;            (Π
-;;;             [⇧
-;;;              (Π
-;;;               [x&#x27; T]
-;;;               (Π [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;]))] [[R l] x&#x27;]))]
-;;;             (Π
-;;;              [⇧
-;;;               (Π
-;;;                [x&#x27; T]
-;;;                (Π
-;;;                 [⇧
-;;;                  (Π
-;;;                   [x&#x27;&#x27; T]
-;;;                   (Π
-;;;                    [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;&#x27;]))]
-;;;                    [[R x&#x27;] x&#x27;&#x27;]))]
-;;;                 [[R x&#x27;] l]))]
-;;;              C))]
-;;;           C)))
-;;;        [[(#&#x27;fixed-points.complete-lattices/glb-unique
-;;;           T
-;;;           R
-;;;           (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u]))))
-;;;          H1]
-;;;         [H2 (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u])))]])])))
-;;;   (#&#x27;latte.quant/the-prop
-;;;    T
-;;;    (λ
-;;;     [l T]
-;;;     (Π
-;;;      [C ✳]
-;;;      (Π
-;;;       [⇧
+;;;       (Π
+;;;        [C ✳]
 ;;;        (Π
 ;;;         [⇧
 ;;;          (Π
-;;;           [x&#x27; T]
-;;;           (Π [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;]))] [[R l] x&#x27;]))]
-;;;         (Π
-;;;          [⇧
-;;;           (Π
-;;;            [x&#x27; T]
+;;;           [⇧
 ;;;            (Π
-;;;             [⇧
+;;;             [x&#x27; T]
+;;;             (Π
+;;;              [⇧ [(λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u]))) x&#x27;]]
+;;;              [[R x&#x27;&#x27;] x&#x27;]))]
+;;;           (Π
+;;;            [⇧
+;;;             (Π
+;;;              [x&#x27;&#x27;&#x27; T]
 ;;;              (Π
-;;;               [x&#x27;&#x27; T]
-;;;               (Π
-;;;                [⇧ (Π [x T] (Π [⇧ [X x]] [[R x] x&#x27;&#x27;]))]
-;;;                [[R x&#x27;] x&#x27;&#x27;]))]
-;;;             [[R x&#x27;] l]))]
-;;;          C))]
-;;;       C)))
-;;;    [[(#&#x27;fixed-points.complete-lattices/glb-unique
-;;;       T
-;;;       R
-;;;       (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u]))))
-;;;      H1]
-;;;     [H2 (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u])))]])]
-;;;  x]
+;;;               [⇧
+;;;                (Π
+;;;                 [x&#x27;&#x27;&#x27;&#x27; T]
+;;;                 (Π
+;;;                  [⇧
+;;;                   [(λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u]))) x&#x27;&#x27;&#x27;&#x27;]]
+;;;                  [[R x&#x27;&#x27;&#x27;] x&#x27;&#x27;&#x27;&#x27;]))]
+;;;               [[R x&#x27;&#x27;&#x27;] x&#x27;&#x27;]))]
+;;;            C))]
+;;;         C))]
+;;;      α))]
+;;;   α))
+;;; -----------------------------------------
+;;; [showterm] glbY
+;;; -----------------------------------------
+;;; (glbY)
+;;; ::T
+;;; -----------------------------------------
+;;; [showterm] &lt;d1&gt;
+;;; -----------------------------------------
+;;; (&lt;d1&gt;)
 ;;; ::(Π
-;;;  [⇧&#x27;
-;;;   (Π
-;;;    [x&#x27;&#x27;&#x27; T]
+;;;  [z T]
+;;;  (Π
+;;;   [⇧&#x27;
 ;;;    (Π
-;;;     [⇧&#x27;&#x27; (Π [x-4 T] (Π [⇧&#x27;&#x27;&#x27; [X x-4]] [[R x-4] x&#x27;&#x27;&#x27;]))]
-;;;     [[R x] x&#x27;&#x27;&#x27;]))]
-;;;  [[R x]
-;;;   (#&#x27;latte.quant/the
-;;;    T
-;;;    (λ
-;;;     [l&#x27; T]
+;;;     [x&#x27;&#x27;&#x27; T]
 ;;;     (Π
-;;;      [C&#x27; ✳]
+;;;      [⇧&#x27;&#x27; (Π [x-4 T] (Π [⇧&#x27;&#x27;&#x27; [X x-4]] [[R x-4] x&#x27;&#x27;&#x27;]))]
+;;;      [[R z] x&#x27;&#x27;&#x27;]))]
+;;;   [[R z]
+;;;    (#&#x27;latte.quant/the
+;;;     T
+;;;     (λ
+;;;      [l&#x27; T]
 ;;;      (Π
-;;;       [⇧-4
-;;;        (Π
-;;;         [⇧-5
-;;;          (Π
-;;;           [x&#x27;&#x27;&#x27;&#x27; T]
-;;;           (Π
-;;;            [⇧-6 (Π [x-5 T] (Π [⇧-7 [X x-5]] [[R x-5] x&#x27;&#x27;&#x27;&#x27;]))]
-;;;            [[R l&#x27;] x&#x27;&#x27;&#x27;&#x27;]))]
+;;;       [C&#x27; ✳]
+;;;       (Π
+;;;        [⇧-4
 ;;;         (Π
-;;;          [⇧-8
+;;;          [⇧-5
 ;;;           (Π
-;;;            [x&#x27;-4 T]
+;;;            [x&#x27;&#x27;&#x27;&#x27; T]
 ;;;            (Π
-;;;             [⇧-9
-;;;              (Π
-;;;               [x&#x27;&#x27;&#x27;&#x27;&#x27; T]
+;;;             [⇧-6 (Π [x-5 T] (Π [⇧-7 [X x-5]] [[R x-5] x&#x27;&#x27;&#x27;&#x27;]))]
+;;;             [[R l&#x27;] x&#x27;&#x27;&#x27;&#x27;]))]
+;;;          (Π
+;;;           [⇧-8
+;;;            (Π
+;;;             [x&#x27;-4 T]
+;;;             (Π
+;;;              [⇧-9
 ;;;               (Π
-;;;                [⇧-10 (Π [x-6 T] (Π [⇧-11 [X x-6]] [[R x-6] x&#x27;&#x27;&#x27;&#x27;&#x27;]))]
-;;;                [[R x&#x27;-4] x&#x27;&#x27;&#x27;&#x27;&#x27;]))]
-;;;             [[R x&#x27;-4] l&#x27;]))]
-;;;          C&#x27;))]
-;;;       C&#x27;)))
-;;;    [[(#&#x27;fixed-points.complete-lattices/glb-unique
-;;;       T
-;;;       R
-;;;       (λ [u&#x27; T] (Π [x-7 T] (Π [⇧-12 [X x-7]] [[R x-7] u&#x27;]))))
-;;;      H1]
-;;;     [H2 (λ [u&#x27;&#x27; T] (Π [x-8 T] (Π [⇧-13 [X x-8]] [[R x-8] u&#x27;&#x27;])))]])])
+;;;                [x&#x27;&#x27;&#x27;&#x27;&#x27; T]
+;;;                (Π
+;;;                 [⇧-10 (Π [x-6 T] (Π [⇧-11 [X x-6]] [[R x-6] x&#x27;&#x27;&#x27;&#x27;&#x27;]))]
+;;;                 [[R x&#x27;-4] x&#x27;&#x27;&#x27;&#x27;&#x27;]))]
+;;;              [[R x&#x27;-4] l&#x27;]))]
+;;;           C&#x27;))]
+;;;        C&#x27;)))
+;;;     [[(#&#x27;fixed-points.complete-lattices/glb-unique
+;;;        T
+;;;        R
+;;;        (λ [u&#x27; T] (Π [x-7 T] (Π [⇧-12 [X x-7]] [[R x-7] u&#x27;]))))
+;;;       H1]
+;;;      [H2 (λ [u&#x27;&#x27; T] (Π [x-8 T] (Π [⇧-13 [X x-8]] [[R x-8] u&#x27;&#x27;])))]])]))
 ;;; -----------------------------------------
 ;;; 
 ;; <-
