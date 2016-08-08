@@ -107,10 +107,6 @@
   (and (rel/reflexive T R)
        (rel/transitive T R)))
 ;; @@
-;; ->
-;;; [Warning] redefinition as term:  preorder
-;;; 
-;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>preorder</span>","value":"preorder"}],"value":"[:defined :term preorder]"}
 ;; <=
@@ -139,10 +135,6 @@
   (and (preorder T R)
        (antisymmetric T R)))
 ;; @@
-;; ->
-;;; [Warning] redefinition as term:  order
-;;; 
-;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>order</span>","value":"order"}],"value":"[:defined :term order]"}
 ;; <=
@@ -158,10 +150,6 @@
   (lambda [x y T]
       (R y x)))
 ;; @@
-;; ->
-;;; [Warning] redefinition as term:  inverse-rel
-;;; 
-;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>inverse-rel</span>","value":"inverse-rel"}],"value":"[:defined :term inverse-rel]"}
 ;; <=
@@ -345,10 +333,6 @@
   (and (elem T l X)
        (lower-bound T R X l)))
 ;; @@
-;; ->
-;;; [Warning] redefinition as term:  least-element
-;;; 
-;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>least-element</span>","value":"least-element"}],"value":"[:defined :term least-element]"}
 ;; <=
@@ -365,6 +349,80 @@
 ;; <=
 
 ;; **
+;;; A lower bound for an ordering relation `R` becomes an upper bound for the inverse of `R`, and *vice versa*. We will often take advantage for *dualizing* the proofs about orders.
+;; **
+
+;; @@
+(defthm inv-lower-bound
+  "The lower bound of a relation `R` becomes an upper bound
+  in the inverse relation."
+  [[T :type] [R (rel T)]]
+  (forall [X (set T)]
+     (forall [l T]
+        (==> (lower-bound T R X l)
+             (upper-bound T (inverse-rel T R) X l)))))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>inv-lower-bound</span>","value":"inv-lower-bound"}],"value":"[:declared :theorem inv-lower-bound]"}
+;; <=
+
+;; @@
+(proof inv-lower-bound :script
+   (assume [X (set T)
+            l T
+            H (lower-bound T R X l)]
+      (have R' _ :by (inverse-rel T R))
+      (assume [x T
+               Hx (elem T x X)]
+        (have a (R l x) :by (H x Hx))
+        (have b (R' x l) :by a)
+        (have c (upper-bound T R' X l) :discharge [x Hx b]))
+      (have d _ :discharge [H c])
+      (qed d)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>inv-lower-bound</span>","value":"inv-lower-bound"}],"value":"[:qed inv-lower-bound]"}
+;; <=
+
+;; **
+;;; And of course, this works the other way around.
+;; **
+
+;; @@
+(defthm inv-upper-bound
+  "The upper bound of a relation `R` becomes a lower bound
+  in the inverse relation."
+  [[T :type] [R (rel T)]]
+  (forall [X (set T)]
+     (forall [u T]
+        (==> (upper-bound T R X u)
+             (lower-bound T (inverse-rel T R) X u)))))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>inv-upper-bound</span>","value":"inv-upper-bound"}],"value":"[:declared :theorem inv-upper-bound]"}
+;; <=
+
+;; @@
+(proof inv-upper-bound :script
+   (assume [X (set T)
+            u T
+            H (upper-bound T R X u)]
+      (have R' _ :by (inverse-rel T R))
+      (assume [x T
+               Hx (elem T x X)]
+        (have a (R x u) :by (H x Hx))
+        (have b (R' u x) :by a)
+        (have c (lower-bound T R' X u) :discharge [x Hx b]))
+      (have d _ :discharge [H c])
+      (qed d)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>inv-upper-bound</span>","value":"inv-upper-bound"}],"value":"[:qed inv-upper-bound]"}
+;; <=
+
+;; **
+;;; The similarity in the two last proofs show that many theorems can be obtained (and then demonstrated) by inverting the lower and upper notions (and derived concepts, see below) together with inverting the relation.
+;;; 
 ;;; Among the most important definitions are those of the **greatest lower bound** (a.k.a. `glb`) and **least upper bound** (a.k.a. `lub`).
 ;; **
 
@@ -393,6 +451,87 @@
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>lub</span>","value":"lub"}],"value":"[:defined :term lub]"}
 ;; <=
+
+;; **
+;;; The `glb` and `lub` are dual concepts.
+;; **
+
+;; @@
+(defthm inv-glb
+  "The inverse of a `glb` is a `lub`."
+  [[T :type] [R (rel T)]]
+  (forall [X (set T)]
+      (forall [l T]
+         (==> (glb T R X l)
+              (lub T (inverse-rel T R) X l)))))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>inv-glb</span>","value":"inv-glb"}],"value":"[:declared :theorem inv-glb]"}
+;; <=
+
+;; @@
+(proof inv-glb :script
+   "First let's state the main hypotheses."
+   (assume [X (set T)
+            l T
+            Hl (glb T R X l)]
+      "From now on the inverse will be noted `R'`."
+      (have R' _ :by (inverse-rel T R))
+      "A `glb` is a lower bound..."
+      (have a1 (lower-bound T R X l) :by (p/%and-elim-left Hl))
+      "... and thus is is an upper bound for the inverse
+       (according to [[inv-lower-bound]])."
+      (have a (upper-bound T R' X l) :by ((inv-lower-bound T R) X l a1))
+      "Now let's assume we have `x` an upper bound in `R'`."
+      (assume [x T
+               Hx (upper-bound T R' X x)]
+         "We trivially have that `l` is lower than `x` in `R'`
+          (since it is greated in `R`)."
+         (have b1 (R' l x) :by ((p/%and-elim-right Hl) x Hx))
+         "Thus we have the right part of the conjunction in [[lub]]."
+         (have b _ :discharge [x Hx b1]))
+      "This is enough to conclude."
+      (have c _ :by ((p/and-intro (upper-bound T R' X l)
+                                  (forall [x T]
+                                     (==> (upper-bound T R' X x)
+                                          (R' l x)))) a b))
+      (qed c)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>inv-glb</span>","value":"inv-glb"}],"value":"[:qed inv-glb]"}
+;; <=
+
+;; @@
+(defthm inv-lub
+  "The inverse of a `lub` is a `glb`."
+  [[T :type] [R (rel T)]]
+  (forall [X (set T)]
+      (forall [u T]
+         (==> (lub T R X u)
+              (glb T (inverse-rel T R) X u)))))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>inv-lub</span>","value":"inv-lub"}],"value":"[:declared :theorem inv-lub]"}
+;; <=
+
+;; @@
+(proof inv-lub :script
+   (assume [X (set T)
+            l T
+            Hl (glb T R X l)]
+      (have R' _ :by (inverse-rel T R))
+      (have a1 (lower-bound T R X l) :by (p/%and-elim-left Hl))
+      (have a (upper-bound T R' X l) :by ((inv-lower-bound T R) X l a1))
+      (assume [x T
+               Hx (upper-bound T R' X x)]
+         (have b1 (R' l x) :by ((p/%and-elim-right Hl) x Hx))
+         (have b _ :discharge [x Hx b1]))
+      (have c _ :by ((p/and-intro (upper-bound T R' X l)
+                                  (forall [x T]
+                                     (==> (upper-bound T R' X x)
+                                          (R' l x)))) a b))
+      (qed c)))
+;; @@
 
 ;; **
 ;;; An important property of the `lub` and `glb` is that if they exist, then they are unique. The only constraint is that of antisymmetry.
@@ -464,10 +603,6 @@
        (exists [l T] (glb T R X l))
        (q/unique T (lambda [l T] (glb T R X l)))))
 ;; @@
-;; ->
-;;; [Warning] redefinition as theorem:  glb-unique
-;;; 
-;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>glb-unique</span>","value":"glb-unique"}],"value":"[:declared :theorem glb-unique]"}
 ;; <=
@@ -508,7 +643,7 @@
 ;; <=
 
 ;; **
-;;; For the least upper bounds we proceed similarly. 
+;;; For the least upper bounds let's exploit the duality reasoning in the proofs.
 ;; **
 
 ;; @@
@@ -518,13 +653,25 @@
   (==> (antisymmetric T R)
        (q/single T (lambda [u T] (lub T R X u)))))
 ;; @@
-;; ->
-;;; [Warning] redefinition as theorem:  lub-single
-;;; 
-;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>lub-single</span>","value":"lub-single"}],"value":"[:declared :theorem lub-single]"}
 ;; <=
+
+;; @@
+(proof lub-single :script
+   (assume [H (antisymmetric T R)]
+      (have R' _ :by (inverse-rel T R))
+      (have H' (antisymmetric T R') :by ((inv-antisym T R) H))
+      (have a (q/single T (lambda [u T] (glb T R' X u)))
+            :by ((glb-single T R' X) H'))     
+      (assume [u1 T
+               u2 T
+               Hu1 (lub T R X u1)
+               Hu2 (lub T R X u2)]
+         (have b (glb T R' X u1) :by ((inv-lower-bound T R) X)
+         (have b (equal T u1 u2) :by (a u1 u2 Hu1 Hu2))     
+           )))
+;; @@
 
 ;; @@
 (proof lub-single :script
