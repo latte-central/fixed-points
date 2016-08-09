@@ -738,7 +738,7 @@
 ;; <=
 
 ;; **
-;;; Let's check that going the `lub` road is equivalent.
+;;; Let's check that going the `lub` road is equivalent. The following theorem is central, and its proof is relatively non-trivial.
 ;; **
 
 ;; @@
@@ -757,203 +757,248 @@
 
 ;; @@
 (proof all-glb-all-lub :script
-   (assume [H1 (antisymmetric T R)
-            H2 (forall [X (set T)]
-                 (exists [l T] (glb T R X l)))]
-      (assume [X (set T)]
-        (have Y _ :by (lambda [u T] (upper-bound T R X u)))
-        (showterm Y)
-        (have <a> (exists [l T] (glb T R Y l)) :by (H2 Y))
-        (shownorm <a>)
-        (have glbY-unique _ :by ((glb-unique T R Y) H1 <a>))
-        (have glbY T :by (q/the T (lambda [l T] (glb T R Y l)) glbY-unique))
-        (showterm glbY)
-        (have <b> (glb T R Y glbY) :by (q/the-prop T (lambda [l T] (glb T R Y l)) glbY-unique))
-        ;(showterm <b>)
+  "First we introduce our two asumptions."
+  (assume [H1 (antisymmetric T R)
+           H2 (forall [X (set T)]
+                (exists [l T] (glb T R X l)))]
+    "Now let's assume an arbitrary set `X`."
+    (assume [X (set T)]
+      "We define `Y` the set of upper bounds of `X`."
+      (have Y _ :by (lambda [u T] (upper-bound T R X u)))
+      "By hypothesis there is a unique greatest lower bound for `Y`."
+      (have <a> (exists [l T] (glb T R Y l)) :by (H2 Y))
+      (have glbY-unique _ :by ((glb-unique T R Y) H1 <a>))
+      "Let's call this `glbY`."
+      (have glbY T :by (q/the T (lambda [l T] (glb T R Y l)) glbY-unique))
+      "And we keep the fact that it is indeed *the* greatest lower bound."
+      (have <b> (glb T R Y glbY) :by (q/the-prop T (lambda [l T] (glb T R Y l)) glbY-unique))
 
-              (assume [x T
-                       Hx (elem T x X)]
-                      
-                 ;; let's show that assuming an y in Y then (R x y)
-                  
-                 (assume [y T
-                          Hy (elem T y Y)]
-                    (have <c1> (upper-bound T R X y) :by Hy)
-                    (have <c2> (R x y) :by (<c1> x Hx))
-                    (have <c> (lower-bound T R Y x) :discharge [y Hy <c2>]))
-                      
-                  (have <d1> (forall [z T]
-                                 (==> (lower-bound T R Y z)
-                                      (R z glbY))) :by ((p/and-elim-right (lower-bound T R Y glbY)
-                                                                          (forall [z T] (==> (lower-bound T R Y z)
-                                                                                             (R z glbY)))) <b>))
-                  ;(showterm <d1>)
-                  ;(showterm x)
-                  (shownorm (<d1> x))
-                  (have <d2> (==> (lower-bound T R Y x)
-                                  (R x glbY)) :by (<d1> x))))))
+      "Our objective now is to show that `glbY` is *also* an upper bound for the set `X`."
+      "For this we assume an arbitrary element `x` of the set `X`."
+      (assume [x T
+               Hx (elem T x X)]
+        
+        "In the first step we'll show that `x` is a lower bound for `Y`."
+        (assume [y T
+                 Hy (elem T y Y)]
+          (have <c1> (upper-bound T R X y) :by Hy)
+          (have <c2> (R x y) :by (<c1> x Hx))
+          (have <c> (lower-bound T R Y x) :discharge [y Hy <c2>]))
 
-                 ;; (have <d> (R x glbY) :by 
-                      
-                      ;; to show : (lub T R X glbY)
-              ;; hence, to show 1: (upper-bound T R X glbY)
-                      
-                 ;;(have <b> (R x glbY) )
-              
-                                        ;     )))
+        "Hence since `glbY` is *greatest* we can show that `(R x glbY)`."
+        (have <d1> (forall [z T]
+                     (==> (lower-bound T R Y z)
+                          (R z glbY))) :by (p/%and-elim-right <b>))
+        
+        (have <d2> (==> (lower-bound T R Y x)
+                        (R x glbY)) :by (<d1> x))
+        
+        (have <d3> (R x glbY) :by (<d2> <c>))
 
-;; Y = (lambda [u T]
-;;       (upper-bound T R X u))
+        "Thus `glbY` is an upper bound for `X`."
+        (have <d> (upper-bound T R X glbY) :discharge [x Hx <d3>]))
+      
+      "The second step consists in showing that `glbY` is the *least* upper bound."
+      (assume [x T
+               Hx (upper-bound T R X x)]
 
-;; (lower-bound T R Y z) =
-;;   (forall [x''' T]
-;;     (==> (elem T x''' Y)
-;;          (R z x''')))
-;; = (forall [x''' T]
-;;     (==> (Y x''')
-;;          (R z x''')))
-;; = (forall [x''' T]
-;;     (==> (upper-bound T R X x''')
-;;          (R z x''')))
-;; = (forall [x''' T]
-;;     (==> (forall [x-4 T]
-;;            (==> (elem T x-4 X)
-;;                 (R x-4 x''')))
-;;          (R z x''')))
-;; = (forall [x''' T]
-;;     (==> (forall [x-4 T]
-;;            (==> (X x-x4)
-;;                 (R x-4 x''')))
-;;          (R z x''')))
+        "Taking an arbitrary upper bound `x`, we can show `(R glbY x)` since
+as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a member of `Y`. "
+        
+        (have <e1> (elem T x Y) :by Hx)
+        (have <e2> (lower-bound T R Y glbY) :by (p/%and-elim-left <b>))
+        (have <e3> (R glbY x) :by (<e2> x <e1>))
+        (have <e> (forall [x T]
+                    (==> (upper-bound T R X x)
+                         (R glbY x))) :discharge [x Hx <e3>]))
+      
+      "Hence we have our main result which is that `glbY` is a `lub` for `X`."
+      (have <h> (lub T R X glbY) :by ((p/and-intro (upper-bound T R X glbY)
+                                                   (forall [x T]
+                                                     (==> (upper-bound T R X x)
+                                                          (R glbY x)))) <d> <e>))
 
-;; type(<d1>) = (forall [z T]
-;;                (==> (forall [x''' T]
-;;                       (==> (forall [x-4 T]
-;;                              (==> (X x-4)
-;;                                   (R x-4 x''')))
-;;                            (R z x''')))
-;;                     (R z (glbY))))
+      "Hence we've just shown that there exists a lub for `X`, namely `glbY`."
+      (have <i> (exists [l T] (lub T R X l))
+            :by ((q/ex-intro T (lambda [l T] (lub T R X l)) glbY) <h>))
 
+      (qed <i>))))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>all-glb-all-lub</span>","value":"all-glb-all-lub"}],"value":"[:qed all-glb-all-lub]"}
+;; <=
 
-;; type(<d1> x) =
-;; (==> (forall [x''' T]
-;;        (==> (forall [x-4 T]
-;;               (==> (X x-4)
-;;                    (R x-4 x''')))
-;;             (R x x''')))
-;;      (R x glbY))
-
+;; **
+;;; From this we can derive a few interesting properties. First, a corrolary of the previous theorem is that a complete lattice has also all lub's.
+;; **
 
 ;; @@
-;; ->
-;;; [showterm] Y
-;;; -----------------------------------------
-;;; (Y)
-;;; ::(Π [u T] ✳)
-;;; -----------------------------------------
-;;; [shownorm] &lt;a&gt;
-;;; -----------------------------------------
-;;; [H2 (λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u])))]
-;;; ::(Π
-;;;  [α ✳]
-;;;  (Π
-;;;   [⇧
-;;;    (Π
-;;;     [x&#x27;&#x27; T]
-;;;     (Π
-;;;      [⇧
-;;;       (Π
-;;;        [C ✳]
-;;;        (Π
-;;;         [⇧
-;;;          (Π
-;;;           [⇧
-;;;            (Π
-;;;             [x&#x27; T]
-;;;             (Π
-;;;              [⇧ [(λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u]))) x&#x27;]]
-;;;              [[R x&#x27;&#x27;] x&#x27;]))]
-;;;           (Π
-;;;            [⇧
-;;;             (Π
-;;;              [x&#x27;&#x27;&#x27; T]
-;;;              (Π
-;;;               [⇧
-;;;                (Π
-;;;                 [x&#x27;&#x27;&#x27;&#x27; T]
-;;;                 (Π
-;;;                  [⇧
-;;;                   [(λ [u T] (Π [x T] (Π [⇧ [X x]] [[R x] u]))) x&#x27;&#x27;&#x27;&#x27;]]
-;;;                  [[R x&#x27;&#x27;&#x27;] x&#x27;&#x27;&#x27;&#x27;]))]
-;;;               [[R x&#x27;&#x27;&#x27;] x&#x27;&#x27;]))]
-;;;            C))]
-;;;         C))]
-;;;      α))]
-;;;   α))
-;;; -----------------------------------------
-;;; [showterm] glbY
-;;; -----------------------------------------
-;;; (glbY)
-;;; ::T
-;;; -----------------------------------------
-;;; [showterm] &lt;d1&gt;
-;;; -----------------------------------------
-;;; (&lt;d1&gt;)
-;;; ::(Π
-;;;  [z T]
-;;;  (Π
-;;;   [⇧&#x27;
-;;;    (Π
-;;;     [x&#x27;&#x27;&#x27; T]
-;;;     (Π
-;;;      [⇧&#x27;&#x27; (Π [x-4 T] (Π [⇧&#x27;&#x27;&#x27; [X x-4]] [[R x-4] x&#x27;&#x27;&#x27;]))]
-;;;      [[R z] x&#x27;&#x27;&#x27;]))]
-;;;   [[R z]
-;;;    (#&#x27;latte.quant/the
-;;;     T
-;;;     (λ
-;;;      [l&#x27; T]
-;;;      (Π
-;;;       [C&#x27; ✳]
-;;;       (Π
-;;;        [⇧-4
-;;;         (Π
-;;;          [⇧-5
-;;;           (Π
-;;;            [x&#x27;&#x27;&#x27;&#x27; T]
-;;;            (Π
-;;;             [⇧-6 (Π [x-5 T] (Π [⇧-7 [X x-5]] [[R x-5] x&#x27;&#x27;&#x27;&#x27;]))]
-;;;             [[R l&#x27;] x&#x27;&#x27;&#x27;&#x27;]))]
-;;;          (Π
-;;;           [⇧-8
-;;;            (Π
-;;;             [x&#x27;-4 T]
-;;;             (Π
-;;;              [⇧-9
-;;;               (Π
-;;;                [x&#x27;&#x27;&#x27;&#x27;&#x27; T]
-;;;                (Π
-;;;                 [⇧-10 (Π [x-6 T] (Π [⇧-11 [X x-6]] [[R x-6] x&#x27;&#x27;&#x27;&#x27;&#x27;]))]
-;;;                 [[R x&#x27;-4] x&#x27;&#x27;&#x27;&#x27;&#x27;]))]
-;;;              [[R x&#x27;-4] l&#x27;]))]
-;;;           C&#x27;))]
-;;;        C&#x27;)))
-;;;     [[(#&#x27;fixed-points.complete-lattices/glb-unique
-;;;        T
-;;;        R
-;;;        (λ [u&#x27; T] (Π [x-7 T] (Π [⇧-12 [X x-7]] [[R x-7] u&#x27;]))))
-;;;       H1]
-;;;      [H2 (λ [u&#x27;&#x27; T] (Π [x-8 T] (Π [⇧-13 [X x-8]] [[R x-8] u&#x27;&#x27;])))]])]))
-;;; -----------------------------------------
-;;; 
-;; <-
+(defthm complete-lattice-all-lub
+  "A complete lattice have all lub's"
+  [[T :type] [R (rel T)]]
+  (==> (complete-lattice T R)
+       (forall [X (set T)]
+            (exists [u T] (lub T R X u)))))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>complete-lattice-all-lub</span>","value":"complete-lattice-all-lub"}],"value":"[:declared :theorem complete-lattice-all-lub]"}
+;; <=
+
+;; @@
+(proof complete-lattice-all-lub :script
+   (assume [H (complete-lattice T R)]
+       (have a (antisymmetric T R) :by (p/%and-elim-right (p/%and-elim-left H)))
+       (have b (forall [X (set T)]
+                 (exists [l T] (glb T R X l))) :by (p/%and-elim-right H))
+       (have c (forall [X (set T)]
+                 (exists [u T] (lub T R X u))) :by ((all-glb-all-lub T R) a b))
+       (qed c)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>complete-lattice-all-lub</span>","value":"complete-lattice-all-lub"}],"value":"[:qed complete-lattice-all-lub]"}
+;; <=
+
+;; **
+;;; Conversely, an ordering relation with all lub's is a complete lattice. We could proceed by duality but it is in fact simpler to prooceed "directly".
+;; **
+
+;; @@
+(defthm all-lub-all-glb
+  "Having all lub's implies having all glb's."
+  [[T :type] [R (rel T)]]
+  (==> (antisymmetric T R)
+       (forall [X (set T)]
+         (exists [u T] (lub T R X u)))
+       (forall [X (set T)]
+         (exists [l T] (glb T R X l)))))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>all-lub-all-glb</span>","value":"all-lub-all-glb"}],"value":"[:declared :theorem all-lub-all-glb]"}
+;; <=
+
+;; @@
+(proof all-lub-all-glb :script
+  (assume [H1 (antisymmetric T R)
+           H2 (forall [X (set T)]
+                (exists [u T] (lub T R X u)))]
+    (assume [X (set T)]
+      (have Y _ :by (lambda [l T] (lower-bound T R X l)))
+      (have <a> (exists [u T] (lub T R Y u)) :by (H2 Y))
+      (have lubY-unique _ :by ((lub-unique T R Y) H1 <a>))
+      (have lubY T :by (q/the T (lambda [u T] (lub T R Y u)) lubY-unique))
+      (have <b> (lub T R Y lubY) :by (q/the-prop T (lambda [u T] (lub T R Y u)) lubY-unique))
+      (assume [x T
+               Hx (elem T x X)]
+        (assume [y T
+                 Hy (elem T y Y)]
+          (have <c1> (lower-bound T R X y) :by Hy)
+          (have <c2> (R y x) :by (<c1> x Hx))
+          (have <c> (upper-bound T R Y x) :discharge [y Hy <c2>]))
+        (have <d1> (forall [z T]
+                     (==> (upper-bound T R Y z)
+                          (R lubY z))) :by (p/%and-elim-right <b>))
+        
+        (have <d2> (==> (upper-bound T R Y x)
+                        (R lubY x)) :by (<d1> x))
+        
+        (have <d3> (R lubY x) :by (<d2> <c>))
+        (have <d> (lower-bound T R X lubY) :discharge [x Hx <d3>]))
+      
+      (assume [x T
+               Hx (lower-bound T R X x)]
+        (have <e1> (elem T x Y) :by Hx)
+        (have <e2> (upper-bound T R Y lubY) :by (p/%and-elim-left <b>))
+        (have <e3> (R x lubY) :by (<e2> x <e1>))
+        (have <e> (forall [x T]
+                    (==> (lower-bound T R X x)
+                         (R x lubY))) :discharge [x Hx <e3>]))
+      (have <h> (glb T R X lubY) :by ((p/and-intro (lower-bound T R X lubY)
+                                                   (forall [x T]
+                                                     (==> (lower-bound T R X x)
+                                                          (R x lubY)))) <d> <e>))
+
+      (have <i> (exists [u T] (glb T R X u))
+            :by ((q/ex-intro T (lambda [u T] (glb T R X u)) lubY) <h>))
+
+      (qed <i>))))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>all-lub-all-glb</span>","value":"all-lub-all-glb"}],"value":"[:qed all-lub-all-glb]"}
+;; <=
+
+;; @@
+(defthm complete-lattice-from-lub
+  "An order `R` with all lub's is a complete lattice."
+  [[T :type] [R (rel T)]]
+  (==> (order T R)
+       (forall [X (set T)]
+           (exists [u T] (lub T R X u)))
+       (complete-lattice T R)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>complete-lattice-from-lub</span>","value":"complete-lattice-from-lub"}],"value":"[:declared :theorem complete-lattice-from-lub]"}
+;; <=
+
+;; @@
+(proof complete-lattice-from-lub :script
+   (assume [H1 (order T R)
+            H2 (forall [X (set T)]
+                   (exists [u T] (lub T R X u)))]
+       (have a (antisymmetric T R) :by (p/%and-elim-right H1))
+       (have b (forall [X (set T)]
+                 (exists [l T] (glb T R X l)))
+             :by ((all-lub-all-glb T R) a H2))
+       (have c (complete-lattice T R) :by ((p/and-intro (order T R)
+                                                        (forall [X (set T)]
+                                                          (exists [l T] (glb T R X l)))) H1 b))
+       (qed c)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>complete-lattice-from-lub</span>","value":"complete-lattice-from-lub"}],"value":"[:qed complete-lattice-from-lub]"}
+;; <=
+
+;; **
+;;; This leads to an important dual property.
+;; **
+
+;; @@
+(defthm inv-complete-lattice
+  "The inverse of a complete lattice is a complete lattice."
+  [[T :type] [R (rel T)]]
+  (==> (complete-lattice T R)
+       (complete-lattice T (inverse-rel T R))))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>inv-complete-lattice</span>","value":"inv-complete-lattice"}],"value":"[:declared :theorem inv-complete-lattice]"}
+;; <=
+
+;; @@
+(proof inv-complete-lattice :script
+    (assume [H (complete-lattice T R)]
+       (have a (order T (inverse-rel T R)) :by ((inv-order T R) (p/%and-elim-left H)))
+       (have b (forall [X (set T)]
+                 (exists [l T] (glb T R X l))) :by (p/%and-elim-right H))
+       (have c (antisymmetric T R) :by (p/%and-elim-right (p/%and-elim-left H)))
+       (assume [X (set T)]
+          (have d1 (exists [l T] (glb T R X l)) :by (b X))
+          (have glbX-unique _ :by ((glb-unique T R X) c d1))
+          (have glbX T :by (q/the T (lambda [l T] (glb T R X l)) glbX-unique))
+          (have d2 (glb T R X glbX) :by (q/the-prop T (lambda [l T] (glb T R X l)) glbX-unique))
+          (have d3 (lub T (inverse-rel T R) X glbX) :by ((inv-glb T R) X glbX d2))
+          (have d4 (exists [u T] (lub T (inverse-rel T R) X u))
+                :by ((q/ex-intro T (lambda [u T] (lub T (inverse-rel T R) X u)) glbX) d3))
+          (have d (forall [X (set T)]
+                    (exists [u T] (lub T (inverse-rel T R) X u))) :discharge [X d4]))
+       (have e (complete-lattice T (inverse-rel T R))
+             :by ((complete-lattice-from-lub T (inverse-rel T R))
+                  a d))
+       (qed e)))
+
+;; @@
 
 ;; **
 ;;; TODO:
 ;;; 
-;;;   - show that a complete lattice has also "all glb's"
-;;;   
-;;;   - conversely, an order that has all glb's is a complete lattice
 ;;;   
 ;;;   - show that a complete-lattice has a bottom (resp. a top)
 ;;;   
