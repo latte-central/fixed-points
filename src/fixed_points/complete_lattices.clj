@@ -11,7 +11,7 @@
 
   (:require [latte.core :as latte :refer [definition defthm defaxiom
                                           forall lambda ==>
-                                          assume have proof lambda]])
+                                          assume have proof try-proof]])
 
   (:require [latte.quant :as q :refer [exists]])
 
@@ -22,7 +22,8 @@
   (:require [latte.rel :as rel :refer [rel]])
   
   (:require [latte-sets.core :as set :refer [set elem]])
-)
+  )
+
 ;; @@
 ;; =>
 ;;; {"type":"html","content":"<span class='clj-nil'>nil</span>","value":"nil"}
@@ -995,6 +996,9 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
        (qed e)))
 
 ;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>inv-complete-lattice</span>","value":"inv-complete-lattice"}],"value":"[:qed inv-complete-lattice]"}
+;; <=
 
 ;; **
 ;;; TODO:
@@ -1007,14 +1011,200 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
 ;; **
 ;;; ## Monotonous functions
 ;;; 
-;;; TODO
+;;; A function from a type `T` to itself (thus an *endo function*) is said **monotonous** (or *monotone*) for a relation `R` if it preserves de relation.
 ;; **
 
+;; @@
+(definition monotonous
+  "The endo function `F` on `T`, monotonous for `R`."
+  [[T :type] [R (rel T)] [F (==> T T)]]
+  (forall [x y T]
+      (==> (R x y) (R (F x) (F y)))))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>monotonous</span>","value":"monotonous"}],"value":"[:defined :term monotonous]"}
+;; <=
+
 ;; **
-;;; ## The fixed point theorem for monotonous functions on complete lattices
+;;; ## The fixed point theorem
 ;;; 
-;;; TODO
+;;; We now formalize a well-known theorem of (least and greatest) fixed points for monotonous functions on complete lattices. It is also known as the *Knaster-Tarski* fixed point theorem, by the names of those who first stated and proved it.
+;;; Its demonstration, while not complex, uses a few interesting tricks that are worth exploring.
+;;; 
+;;; Let's begin with the definition of a fixed point.
 ;; **
+
+;; @@
+(definition fixed-point
+  "A fixed point `x` of an endo function `F` on `T`."
+  [[T :type] [F (==> T T)] [x T]]
+  (equal T x (F x)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>fixed-point</span>","value":"fixed-point"}],"value":"[:defined :term fixed-point]"}
+;; <=
+
+;; **
+;;; There are interesting notions related to fixed points.
+;; **
+
+;; @@
+(definition pre-fixed-point
+  "A pre-fixed point `x` of an endo function `F` on `T`
+  wrt. a relation `R`."
+  [[T :type] [R (rel T)] [F (==> T T)] [x T]]
+  (R x (F x)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>pre-fixed-point</span>","value":"pre-fixed-point"}],"value":"[:defined :term pre-fixed-point]"}
+;; <=
+
+;; @@
+(definition post-fixed-point
+  "A post-fixed point `x` of an endo function `F` on `T`
+  wrt. a relation `R`."
+  [[T :type] [R (rel T)] [F (==> T T)] [x T]]
+  (R (F x) x))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>post-fixed-point</span>","value":"post-fixed-point"}],"value":"[:defined :term post-fixed-point]"}
+;; <=
+
+;; @@
+(defthm pre-post-fixed-point
+  "A pre and post fixed point if a fixed point."
+  [[T :type] [R (rel T)] [F (==> T T)] [x T]]
+  (==> (antisymmetric T R)
+       (pre-fixed-point T R F x)
+       (post-fixed-point T R F x)
+       (fixed-point T F x)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>pre-post-fixed-point</span>","value":"pre-post-fixed-point"}],"value":"[:declared :theorem pre-post-fixed-point]"}
+;; <=
+
+;; @@
+(proof pre-post-fixed-point :script
+   (assume [H1 (antisymmetric T R)
+            H2 (pre-fixed-point T R F x)
+            H3 (post-fixed-point T R F x)]
+      (have <a> (fixed-point T F x)
+            :by (H1 x (F x) H2 H3))
+      (qed <a>)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>pre-post-fixed-point</span>","value":"pre-post-fixed-point"}],"value":"[:qed pre-post-fixed-point]"}
+;; <=
+
+;; **
+;;; The most important notions are those of a **least fixed point** (a.k.a. *lfp*) and a **greatest fixed point** (a.k.a. *gfp*).
+;; **
+
+;; @@
+(definition lfp
+  "The least fixed point of a function `F` wrt. a relation `R`."
+  [[T :type] [R (rel T)] [F (==> T T)] [x T]]
+  (and (fixed-point T F x)
+       (forall [y T]
+           (==> (fixed-point T F y)
+                (R x y)))))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>lfp</span>","value":"lfp"}],"value":"[:defined :term lfp]"}
+;; <=
+
+;; **
+;;; The notion if quite close to a least upper bound, and the `gfp` is similar to a greatest lower bound.
+;; **
+
+;; @@
+(definition gfp
+  "The greatest fixed point of a function `F` wrt. a relation `R`."
+  [[T :type] [R (rel T)] [F (==> T T)] [x T]]
+  (and (fixed-point T F x)
+       (forall [y T]
+           (==> (fixed-point T F y)
+                (R y x)))))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>gfp</span>","value":"gfp"}],"value":"[:defined :term gfp]"}
+;; <=
+
+;; **
+;;; Now the theorem comes in two parts.
+;; **
+
+;; @@
+(defthm lfp-thm
+  "The fixed-point theorem (least fixed point part)."
+  [[T :type] [R (rel T)] [F (==> T T)]]
+  (==> (complete-lattice T R)
+       (monotonous T R F)
+       (exists [mu T] (lfp T R F mu))))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>lfp-thm</span>","value":"lfp-thm"}],"value":"[:declared :theorem lfp-thm]"}
+;; <=
+
+;; @@
+(proof lfp-thm :script
+  (assume [H1 (complete-lattice T R)
+           H2 (monotonous T R F)]
+    "We first define the set of post-fixed points of `F`."
+    (have Y _ :by (lambda [y T] (post-fixed-point T R F y)))
+    "This set has a glb since `R` is a complete lattice."
+    (have glbY-ex (exists [l T] (glb T R Y l))
+          :by ((p/%and-elim-right H1) Y))
+    (have glbY-unique _ :by ((glb-unique T R Y)
+                             (p/%and-elim-right (p/%and-elim-left H1))
+                             glbY-ex))
+    "We name it `glbY`."
+    (have glbY T :by (q/the T (lambda [l T] (glb T R Y l)) glbY-unique))
+    "And we name its property of being a glb."
+    (have <a> (glb T R Y glbY)
+          :by (q/the-prop T (lambda [l T] (glb T R Y l)) glbY-unique))
+
+    "In the first part we will show that `glbY` is a fixed point of `F`."
+    
+    "For this, we take an arbitrary elment `y` of `Y` (hence an arbitrary post-fixed point)."
+    (assume [y T
+             Hy (elem T y Y)]
+      "It is greater than a lower bound, e.g. `glbY`."
+      (have <b1> (R glbY y) :by ((p/%and-elim-left <a>) y Hy))
+      "And thus by monotonicity:"
+      (have <b2> (R (F glbY) (F y)) :by (H2 glbY y <b1>))
+      "And it is also a post-fixed point, hence :"
+      (have <b3> (R (F y) y) :by Hy)
+      "Now, by transitivity:"
+      (have <b4> (R (F glbY) y) :by
+            ((p/%and-elim-right (p/%and-elim-left (p/%and-elim-left H1)))
+             (F glbY) (F y) y <b2> <b3>))
+      "Thus `(F glbY)` is a lower bound of `Y`."
+      (have <b> (lower-bound T R Y (F glbY))
+            :discharge [y Hy <b4>])
+
+    "Moreover, because `glbY` is a greatest lower bound."
+    (have <c> (R (F glbY) glbY) :by ((p/%and-elim-right <a>) (F glbY) <b>))
+    "And since `F` is monotonous."
+    (have <d1> (R (F (F glbY)) (F glbY)) :by (H2 (F glbY) glbY <c>))
+    (have <d> (elem T (F glbY) Y) :by <d1>)
+
+    "Now `glbY` is still a lower bound, thus:"
+    (have <e> (R glbY (F glbY)) :by ((p/%and-elim-left <a>) (F glbY) <d>))
+    "Thus `glbY` is a fixed point of `F`, since it is both a pre and a post-fixed point."
+    (have <f> (fixed-point T F glbY)
+          :by ((pre-post-fixed-point T R F glbY)
+               (p/%and-elim-right (p/%and-elim-left H1))
+               <e> <c>))
+
+    "For the second part, we need to show that `glbY` is the *least* fixed point."
+
+    (assume [z T
+             Hz (fixed point T R F z)]))))
+      
+    
+      
+;; @@
 
 ;; @@
 
