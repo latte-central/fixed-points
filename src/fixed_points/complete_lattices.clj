@@ -1195,10 +1195,6 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
            (==> (fixed-point T F y)
                 (R x y)))))
 ;; @@
-;; ->
-;;; [Warning] redefinition as term:  lfp
-;;; 
-;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>lfp</span>","value":"lfp"}],"value":"[:defined :term lfp]"}
 ;; <=
@@ -1359,10 +1355,6 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
            (==> (fixed-point T F y)
                 (R y x)))))
 ;; @@
-;; ->
-;;; [Warning] redefinition as term:  gfp
-;;; 
-;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>gfp</span>","value":"gfp"}],"value":"[:defined :term gfp]"}
 ;; <=
@@ -1379,10 +1371,6 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
        (monotonous T R F)
        (exists [nu T] (gfp T R F nu))))
 ;; @@
-;; ->
-;;; [Warning] redefinition as theorem:  gfp-thm
-;;; 
-;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>gfp-thm</span>","value":"gfp-thm"}],"value":"[:declared :theorem gfp-thm]"}
 ;; <=
@@ -1416,6 +1404,9 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
           :by ((q/ex-intro T (lambda [nu T] (gfp T R F nu)) nu) <c>))
     (qed <d>)))
 ;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>gfp-thm</span>","value":"gfp-thm"}],"value":"[:qed gfp-thm]"}
+;; <=
 
 ;; **
 ;;; This concludes our proof of the *Knaster-Tarski* fixed point theorem(s) for monotonous functions on complete lattices. In another document, we will apply this theorem for *great good*.
