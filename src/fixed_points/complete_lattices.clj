@@ -23,7 +23,6 @@
   
   (:require [latte-sets.core :as set :refer [set elem]])
   )
-
 ;; @@
 ;; =>
 ;;; {"type":"html","content":"<span class='clj-nil'>nil</span>","value":"nil"}
@@ -1096,6 +1095,56 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>pre-post-fixed-point</span>","value":"pre-post-fixed-point"}],"value":"[:qed pre-post-fixed-point]"}
 ;; <=
 
+;; @@
+(defthm fixed-point-pre
+  "A fixed point is also a pre-fixed point."
+  [[T :type] [R (rel T)] [F (==> T T)] [x T]]
+  (==> (rel/reflexive T R)
+       (fixed-point T F x)
+       (pre-fixed-point T R F x)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>fixed-point-pre</span>","value":"fixed-point-pre"}],"value":"[:declared :theorem fixed-point-pre]"}
+;; <=
+
+;; @@
+(proof fixed-point-pre :script
+   (assume [H1 (rel/reflexive T R)
+            H2 (fixed-point T F x)]
+      (have P _ :term (lambda [y T] (R x y)))
+      (have <a> (P x) :by (H1 x))
+      (have <b> (P (F x)) :by ((eq/eq-subst T P x (F x)) H2 <a>))
+      (qed <b>)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>fixed-point-pre</span>","value":"fixed-point-pre"}],"value":"[:qed fixed-point-pre]"}
+;; <=
+
+;; @@
+(defthm fixed-point-post
+  "A fixed point is also a post-fixed point."
+  [[T :type] [R (rel T)] [F (==> T T)] [x T]]
+  (==> (rel/reflexive T R)
+       (fixed-point T F x)
+       (post-fixed-point T R F x)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>fixed-point-post</span>","value":"fixed-point-post"}],"value":"[:declared :theorem fixed-point-post]"}
+;; <=
+
+;; @@
+(proof fixed-point-post :script
+   (assume [H1 (rel/reflexive T R)
+            H2 (fixed-point T F x)]
+      (have P _ :term (lambda [y T] (R y x)))
+      (have <a> (P x) :by (H1 x))
+      (have <b> (P (F x)) :by ((eq/eq-subst T P x (F x)) H2 <a>))
+      (qed <b>)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>fixed-point-post</span>","value":"fixed-point-post"}],"value":"[:qed fixed-point-post]"}
+;; <=
+
 ;; **
 ;;; The most important notions are those of a **least fixed point** (a.k.a. *lfp*) and a **greatest fixed point** (a.k.a. *gfp*).
 ;; **
@@ -1181,7 +1230,7 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
              (F glbY) (F y) y <b2> <b3>))
       "Thus `(F glbY)` is a lower bound of `Y`."
       (have <b> (lower-bound T R Y (F glbY))
-            :discharge [y Hy <b4>])
+            :discharge [y Hy <b4>]))
 
     "Moreover, because `glbY` is a greatest lower bound."
     (have <c> (R (F glbY) glbY) :by ((p/%and-elim-right <a>) (F glbY) <b>))
@@ -1200,9 +1249,31 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
     "For the second part, we need to show that `glbY` is the *least* fixed point."
 
     (assume [z T
-             Hz (fixed point T R F z)]))))
-      
-    
+             Hz (fixed-point T F z)]
+            
+        "A fixed point `z` is also a post-fixed point."
+        (have <g1> (post-fixed-point T R F z) 
+              :by ((fixed-point-post T R F z)
+                   (p/%and-elim-left (p/%and-elim-left (p/%and-elim-left H1)))
+                   Hz))
+        "Hence `z` is a member of the set `Y`..."
+        (have <h2> (elem T z Y) :by <g1>)
+        "... which `glbY` (our fixed point) is a (greatest) lower bound, hence the following:"
+        (have <h3> (R glbY z) :by ((p/%and-elim-left <a>) z <h2>))
+        "hence we have the *least* property."
+        (have <h> (forall [z T]
+                    (==> (fixed-point T F z)
+                         (R glbY z))) :discharge [z Hz <h3>]))
+
+    "Now we obtained the `lfp` property for `glbY`."
+    (have <i> (lfp T R F glbY)
+          :by ((p/and-intro (fixed-point T F glbY)
+                            (forall [y T]
+                              (==> (fixed-point T F y)
+                                   (R glbY y)))) <f> <h>))
+
+    "Which leads to the existential conclusion."
+    (qed ((q/ex-intro T (lambda [mu T] (lfp T R F mu)) glbY) <i>))))
       
 ;; @@
 
