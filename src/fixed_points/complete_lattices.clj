@@ -3,6 +3,9 @@
 ;; **
 ;;; # Fixed points in complete lattices
 ;;; 
+;;; In this document we provide a formal proof of one of the simplest and perhaps most useful *fixed point theorem*. The formalization is conducted on a computer using the [LaTTe proof assistant](https://github.com/fredokun/LaTTe). This means that all the proofs are checked for correctness. There are two main motivations for this document. First, the least and greatest fixed point theorems have useful applications, most notably to formalize inductive and co-inductive definitions. Another motivation is to show that non-trivial mathematics can be handled by the LaTTe proof assistant.
+;;; 
+;;; > This document is (C) 2016 Frederic Peschanski - Creative Commons CC-BY-SA 4.0.
 ;; **
 
 ;; @@
@@ -36,7 +39,7 @@
 ;; <=
 
 ;; **
-;;; In this document we provide a formal proof of one of the simplest and perhaps most useful *fixed point theorem*. The formalization is conducted on a computer using the [LaTTe proof assistant](https://github.com/fredokun/LaTTe).
+;;; 
 ;; **
 
 ;; **
@@ -1025,7 +1028,39 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
 ;; <=
 
 ;; **
-;;; ## The fixed point theorem
+;;; It is easy to work with the inverse relation.
+;; **
+
+;; @@
+(defthm inv-monotonous
+  "A monotonous function remains monotonous for the inverse relation."
+  [[T :type] [R (rel T)] [F (==> T T)]]
+  (==> (monotonous T R F)
+       (monotonous T (inverse-rel T R) F)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>inv-monotonous</span>","value":"inv-monotonous"}],"value":"[:declared :theorem inv-monotonous]"}
+;; <=
+
+;; @@
+(proof inv-monotonous :script
+   (assume [H (monotonous T R F)]
+      (have R' _ :term (inverse-rel T R))
+      (assume [x T
+               y T
+               H' (R' x y)]
+         (have <a> (R y x) :by H')
+         (have <b> (R (F y) (F x)) :by ((H y x) <a>))
+         (have <c> (R' (F x) (F y)) :by <b>)
+         (have <d> (monotonous T R' F) :discharge [x y H' <c>]))
+      (qed <d>)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>inv-monotonous</span>","value":"inv-monotonous"}],"value":"[:qed inv-monotonous]"}
+;; <=
+
+;; **
+;;; ## The fixed point theorems
 ;;; 
 ;;; We now formalize a well-known theorem of (least and greatest) fixed points for monotonous functions on complete lattices. It is also known as the *Knaster-Tarski* fixed point theorem, by the names of those who first stated and proved it.
 ;;; Its demonstration, while not complex, uses a few interesting tricks that are worth exploring.
@@ -1146,7 +1181,9 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
 ;; <=
 
 ;; **
-;;; The most important notions are those of a **least fixed point** (a.k.a. *lfp*) and a **greatest fixed point** (a.k.a. *gfp*).
+;;; ### The least fixed point theorem
+;;; 
+;;; We begin with the notion of a **least fixed point** that underlies *inductive definitions*.
 ;; **
 
 ;; @@
@@ -1158,25 +1195,47 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
            (==> (fixed-point T F y)
                 (R x y)))))
 ;; @@
+;; ->
+;;; [Warning] redefinition as term:  lfp
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>lfp</span>","value":"lfp"}],"value":"[:defined :term lfp]"}
 ;; <=
 
 ;; **
-;;; The notion if quite close to a least upper bound, and the `gfp` is similar to a greatest lower bound.
+;;; The least fixed point notion is very close to a greatest lower bound. Thus, a least fixed point, if it exists, is of course unique.
 ;; **
 
 ;; @@
-(definition gfp
-  "The greatest fixed point of a function `F` wrt. a relation `R`."
-  [[T :type] [R (rel T)] [F (==> T T)] [x T]]
-  (and (fixed-point T F x)
-       (forall [y T]
-           (==> (fixed-point T F y)
-                (R y x)))))
+(defthm lfp-single
+  "There is at most one least fixed point."
+  [[T :type] [R (rel T)] [F (==> T T)]]
+  (==> (antisymmetric T R)
+       (q/single T (lambda [mu T] (lfp T R F mu)))))
 ;; @@
 ;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>gfp</span>","value":"gfp"}],"value":"[:defined :term gfp]"}
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>lfp-single</span>","value":"lfp-single"}],"value":"[:declared :theorem lfp-single]"}
+;; <=
+
+;; @@
+(proof lfp-single :script
+  (assume [H (antisymmetric T R)]
+    (assume [x T
+             y T
+             Hx (lfp T R F x)
+             Hy (lfp T R F y)]
+      (have <a> (R x y) :by ((p/%and-elim-right Hx) y (p/%and-elim-left Hy)))
+      (have <b> (R y x) :by ((p/%and-elim-right Hy) x (p/%and-elim-left Hx)))
+      (have <c> (equal T x y) :by (H x y <a> <b>))
+      (have <d> (forall [x y T]
+                  (==> (lfp T R F x)
+                       (lfp T R F y)
+                       (equal T x y))) :discharge [x y Hx Hy <c>]))
+    (qed <d>)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>lfp-single</span>","value":"lfp-single"}],"value":"[:qed lfp-single]"}
 ;; <=
 
 ;; **
@@ -1276,6 +1335,93 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
     (qed ((q/ex-intro T (lambda [mu T] (lfp T R F mu)) glbY) <i>))))
       
 ;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>lfp-thm</span>","value":"lfp-thm"}],"value":"[:qed lfp-thm]"}
+;; <=
+
+;; **
+;;; This non-trivial (albeit smooth) proof takes a few second to check (a good benchmark for LaTTe proof checker).
+;;; An important property of the `lfp` is that it is unique.
+;; **
+
+;; **
+;;; ## The greatest fixed point theorem
+;;; 
+;;; For the *greatest fixed point*, the basis for *coinductive definitions*, we will largely exploit a duality argument.
+;; **
+
+;; @@
+(definition gfp
+  "The greatest fixed point of a function `F` wrt. a relation `R`."
+  [[T :type] [R (rel T)] [F (==> T T)] [x T]]
+  (and (fixed-point T F x)
+       (forall [y T]
+           (==> (fixed-point T F y)
+                (R y x)))))
+;; @@
+;; ->
+;;; [Warning] redefinition as term:  gfp
+;;; 
+;; <-
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>gfp</span>","value":"gfp"}],"value":"[:defined :term gfp]"}
+;; <=
+
+;; **
+;;; Below is the statement of the greatest fixed point theorem.
+;; **
+
+;; @@
+(defthm gfp-thm
+  "The fixed-point theorem (greatest fixed point part)."
+  [[T :type] [R (rel T)] [F (==> T T)]]
+  (==> (complete-lattice T R)
+       (monotonous T R F)
+       (exists [nu T] (gfp T R F nu))))
+;; @@
+;; ->
+;;; [Warning] redefinition as theorem:  gfp-thm
+;;; 
+;; <-
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>gfp-thm</span>","value":"gfp-thm"}],"value":"[:declared :theorem gfp-thm]"}
+;; <=
+
+;; @@
+(proof gfp-thm :script
+  (assume [H1 (complete-lattice T R)
+           H2 (monotonous T R F)]
+    (have R' _ :term (inverse-rel T R))
+    "We first translate our hypotheses to the inverse relation."
+    (have H1' (complete-lattice T R') 
+          :by ((inv-complete-lattice T R) H1))
+    (have H2' (monotonous T R' F)
+          :by ((inv-monotonous T R F) H2))
+    "Then we apply the least fixed point theorem on the inverse complete lattice."
+    (have <a> (exists [nu T] (lfp T R' F nu)) 
+          :by ((lfp-thm T R' F) H1' H2'))
+    (have unique-nu (q/unique T (lambda [nu T] (lfp T R' F nu)))
+          :by ((p/and-intro (q/ex T (lambda [nu T] (lfp T R' F nu)))
+                            (q/single T (lambda [nu T] (lfp T R' F nu))))
+               <a> ((lfp-single T R' F)
+                    (p/%and-elim-right (p/%and-elim-left H1')))))
+    "We call `nu` the `lfp` of the inverse complete lattice."
+    (have nu _ :by (q/the T (lambda [nu T] (lfp T R' F nu)) unique-nu))
+    "A least fixed point for the inverse complete lattice..."
+    (have <b> (lfp T R' F nu) :by (q/the-prop T (lambda [nu T] (lfp T R' F nu)) unique-nu))
+    "... trivially becomes a greatest fixed point in `R`"
+    (have <c> (gfp T R F nu) :by <b>)
+    "Hence the `gfp` exists are we're done."
+    (have <d> (exists [nu T] (gfp T R F nu))
+          :by ((q/ex-intro T (lambda [nu T] (gfp T R F nu)) nu) <c>))
+    (qed <d>)))
+;; @@
+
+;; **
+;;; This concludes our proof of the *Knaster-Tarski* fixed point theorem(s) for monotonous functions on complete lattices. In another document, we will apply this theorem for *great good*.
+;;; 
+;;; Happy proving !
+;; **
 
 ;; @@
 
