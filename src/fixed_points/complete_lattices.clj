@@ -14,18 +14,12 @@
 
   (:require [latte.core :as latte :refer [definition defthm defaxiom
                                           forall lambda ==>
-                                          assume have proof try-proof]])
-
-  (:require [latte.quant :as q :refer [exists]])
-
-  (:require [latte.prop :as p :refer [<=> and or not]])
-
-  (:require [latte.equal :as eq :refer [equal]])
-  
-  (:require [latte.rel :as rel :refer [rel]])
-  
-  (:require [latte-sets.core :as set :refer [set elem]])
-  )
+                                          assume have proof try-proof]]
+ 			[latte.quant :as q :refer [exists]]
+            [latte.prop :as p :refer [<=> and or not]]
+            [latte.equal :as eq :refer [equal]]
+            [latte.rel :as rel :refer [rel]]
+            [latte-sets.core :as set :refer [set elem]]))
 ;; @@
 ;; =>
 ;;; {"type":"html","content":"<span class='clj-nil'>nil</span>","value":"nil"}
@@ -37,10 +31,6 @@
 ;; =>
 ;;; {"type":"html","content":"<span class='clj-nil'>nil</span>","value":"nil"}
 ;; <=
-
-;; **
-;;; 
-;; **
 
 ;; **
 ;;; ## Ordering relations
@@ -231,8 +221,8 @@
         (have a (rel/reflexive T (inverse-rel T R)) :by ((inv-refl T R) a1))
         (have b1 (rel/transitive T R) :by (p/%and-elim-right H))
         (have b (rel/transitive T (inverse-rel T R)) :by ((inv-trans T R) b1))
-        (qed ((p/and-intro (rel/reflexive T (inverse-rel T R))
-                           (rel/transitive T (inverse-rel T R))) a b))))
+        (have c _ :by (p/%and-intro a b))
+        (qed c)))
 ;; @@
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>inv-preorder</span>","value":"inv-preorder"}],"value":"[:qed inv-preorder]"}
@@ -286,8 +276,8 @@
         (have a (preorder T (inverse-rel T R)) :by ((inv-preorder T R) a1))
         (have b1 (antisymmetric T R) :by (p/%and-elim-right H))
         (have b (antisymmetric T (inverse-rel T R)) :by ((inv-antisym T R) b1))
-        (qed ((p/and-intro (preorder T (inverse-rel T R))
-                           (antisymmetric T (inverse-rel T R))) a b))))
+        (have c _ :by (p/%and-intro a b))
+        (qed c)))
 ;; @@
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>inv-order</span>","value":"inv-order"}],"value":"[:qed inv-order]"}
@@ -494,10 +484,7 @@
          "Thus we have the right part of the conjunction in [[lub]]."
          (have b _ :discharge [x Hx b1]))
       "This is enough to conclude."
-      (have c _ :by ((p/and-intro (upper-bound T R' X l)
-                                  (forall [x T]
-                                     (==> (upper-bound T R' X x)
-                                          (R' l x)))) a b))
+      (have c _ :by (p/%and-intro a b))
       (qed c)))
 ;; @@
 ;; =>
@@ -529,10 +516,7 @@
                Hx (lower-bound T R' X x)]
          (have b1 (R' x u) :by ((p/%and-elim-right Hu) x Hx))
          (have b _ :discharge [x Hx b1]))
-      (have c _ :by ((p/and-intro (lower-bound T R' X u)
-                                  (forall [x T]
-                                     (==> (lower-bound T R' X x)
-                                          (R' x u)))) a b))
+      (have c _ :by (p/%and-intro a b))
       (qed c)))
 ;; @@
 ;; =>
@@ -641,8 +625,8 @@
      (have a (q/single T (lambda [l T] (glb T R X l)))
            :by ((glb-single T R X) H1))
      "And then conclude by the conjunction with existence (hypothesis `H2`)."
-     (qed ((p/and-intro (exists [l T] (glb T R X l))
-                        (q/single T (lambda [l T] (glb T R X l)))) H2 a))))
+     (have b _ :by (p/%and-intro H2 a))
+     (qed b)))
 ;; @@
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>glb-unique</span>","value":"glb-unique"}],"value":"[:qed glb-unique]"}
@@ -707,8 +691,8 @@
            H2 (exists [u T] (lub T R X u))]
      (have a (q/single T (lambda [u T] (lub T R X u)))
            :by ((lub-single T R X) H1))
-     (qed ((p/and-intro (exists [u T] (lub T R X u))
-                        (q/single T (lambda [u T] (lub T R X u)))) H2 a))))
+     (have b _ :by (p/%and-intro H2 a))
+     (qed b))) 
 ;; @@
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>lub-unique</span>","value":"lub-unique"}],"value":"[:qed lub-unique]"}
@@ -816,10 +800,7 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
                          (R glbY x))) :discharge [x Hx <e3>]))
       
       "Hence we have our main result which is that `glbY` is a `lub` for `X`."
-      (have <h> (lub T R X glbY) :by ((p/and-intro (upper-bound T R X glbY)
-                                                   (forall [x T]
-                                                     (==> (upper-bound T R X x)
-                                                          (R glbY x)))) <d> <e>))
+      (have <h> (lub T R X glbY) :by (p/%and-intro <d> <e>))
 
       "Hence we've just shown that there exists a lub for `X`, namely `glbY`."
       (have <i> (exists [l T] (lub T R X l))
@@ -915,10 +896,7 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
         (have <e> (forall [x T]
                     (==> (lower-bound T R X x)
                          (R x lubY))) :discharge [x Hx <e3>]))
-      (have <h> (glb T R X lubY) :by ((p/and-intro (lower-bound T R X lubY)
-                                                   (forall [x T]
-                                                     (==> (lower-bound T R X x)
-                                                          (R x lubY)))) <d> <e>))
+      (have <h> (glb T R X lubY) :by (p/%and-intro <d> <e>))
 
       (have <i> (exists [u T] (glb T R X u))
             :by ((q/ex-intro T (lambda [u T] (glb T R X u)) lubY) <h>))
@@ -951,9 +929,7 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
        (have b (forall [X (set T)]
                  (exists [l T] (glb T R X l)))
              :by ((all-lub-all-glb T R) a H2))
-       (have c (complete-lattice T R) :by ((p/and-intro (order T R)
-                                                        (forall [X (set T)]
-                                                          (exists [l T] (glb T R X l)))) H1 b))
+       (have c (complete-lattice T R) :by (p/%and-intro H1 b))
        (qed c)))
 ;; @@
 ;; =>
@@ -996,7 +972,6 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
              :by ((complete-lattice-from-lub T (inverse-rel T R))
                   a d))
        (qed e)))
-
 ;; @@
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>inv-complete-lattice</span>","value":"inv-complete-lattice"}],"value":"[:qed inv-complete-lattice]"}
@@ -1322,10 +1297,7 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
 
     "Now we obtained the `lfp` property for `glbY`."
     (have <i> (lfp T R F glbY)
-          :by ((p/and-intro (fixed-point T F glbY)
-                            (forall [y T]
-                              (==> (fixed-point T F y)
-                                   (R glbY y)))) <f> <h>))
+          :by (p/%and-intro <f> <h>))
 
     "Which leads to the existential conclusion."
     (qed ((q/ex-intro T (lambda [mu T] (lfp T R F mu)) glbY) <i>))))
@@ -1389,10 +1361,8 @@ as a `glbY` is a lower bound for `Y` and the assumed `x` is by hypothesis a memb
     (have <a> (exists [nu T] (lfp T R' F nu)) 
           :by ((lfp-thm T R' F) H1' H2'))
     (have unique-nu (q/unique T (lambda [nu T] (lfp T R' F nu)))
-          :by ((p/and-intro (q/ex T (lambda [nu T] (lfp T R' F nu)))
-                            (q/single T (lambda [nu T] (lfp T R' F nu))))
-               <a> ((lfp-single T R' F)
-                    (p/%and-elim-right (p/%and-elim-left H1')))))
+          :by (p/%and-intro <a> ((lfp-single T R' F)
+                                 (p/%and-elim-right (p/%and-elim-left H1')))))
     "We call `nu` the `lfp` of the inverse complete lattice."
     (have nu _ :by (q/the T (lambda [nu T] (lfp T R' F nu)) unique-nu))
     "A least fixed point for the inverse complete lattice..."
