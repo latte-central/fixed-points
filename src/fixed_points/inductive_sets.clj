@@ -38,15 +38,11 @@
 ;;; Inductively defined sets are often described using logical rules.
 ;;; For example, the set of natural number can be described as the *least* set satisfying the rules below.
 ;;; 
-;;; @@
-;;; \dfrac{}{0\in \mathbb{N}}  \quad \forall n. \dfrac{\\{n\\}\subseteq\mathbb{N}}{succ(n)\in \mathbb{N}}
-;;; @@
+;;; $$\dfrac{}{0\in \mathbb{N}}  \quad \forall n. \dfrac{\\{n\\}\subseteq\mathbb{N}}{succ(n)\in \mathbb{N}}$$
 ;;; 
 ;;; Another example is the set of strings over an alphabet @@\Sigma@@, denoted by $\Sigma^*$.
 ;;; 
-;;; @@
-;;; \dfrac{}{\epsilon\in \Sigma^\*}  \quad \forall x. \forall a. a\in\Sigma \implies \dfrac{\\{x\\}\subseteq\Sigma^\*}{ax \in \Sigma^*}
-;;; @@
+;;; $$\dfrac{}{\epsilon\in \Sigma^\*}  \quad \forall x. \forall a. a\in\Sigma \implies \dfrac{\\{x\\}\subseteq\Sigma^\*}{ax \in \Sigma^*}$$
 ;;; 
 ;;; Given a type @@T@@, a rule instance on @@T@@ is of the form @@(X,y)@@ with @@X@@ a set of @@T@@-elements and @@y@@ a @@T@@-element. The intended meaning is that if @@X@@ is a subset of the inductive set, then we can deduce that @@y@@ is *also* an element.   Hence, a rule-based definition is a relation from powersets to sets.
 ;; **
@@ -57,10 +53,6 @@
   [[T :type]]
   (==> (set T) T :type))
 ;; @@
-;; ->
-;;; [Warning] redefinition as term:  rules
-;;; 
-;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>rules</span>","value":"rules"}],"value":"[:defined :term rules]"}
 ;; <=
@@ -79,10 +71,6 @@
              (subset T X E)
              (elem T y E)))))
 ;; @@
-;; ->
-;;; [Warning] redefinition as term:  closed-set
-;;; 
-;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>closed-set</span>","value":"closed-set"}],"value":"[:defined :term closed-set]"}
 ;; <=
@@ -117,7 +105,7 @@
 ;; <=
 
 ;; @@
-(try-proof closed-inductive-set
+(proof closed-inductive-set
    :script
    (assume [X (set T)
             y T
@@ -125,12 +113,19 @@
             H2 (subset T X (inductive-set T R))]
       (assume [Y (set T)
                HY (closed-set T R Y)]
-         (have a (subset T X Y)))))
-;; @@
+         (have a (subset T (inductive-set T R) Y)
+               :by ((pset/intersections-lower-bound T (lambda [E (set T)]
+                                                        (closed-set T R E)))
+                    Y HY))
+         (have b (subset T X Y)
+               :by ((set/subset-trans T X (inductive-set T R) Y)
+                    H2 a))
+         (have c (elem T y Y) :by (HY X y H1 b))
+         
+         )))
 
-;; **
-;;; 
-;; **
+         
+;; @@
 
 ;; @@
 
