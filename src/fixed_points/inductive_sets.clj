@@ -18,7 +18,7 @@
             [latte.equal :as eq :refer [equal]]
             [latte.rel :as rel :refer [rel]]
             [latte-sets.core :as set :refer [set elem
-                                             subset seteq]]
+                                             subset seteq emptyset]]
             [latte-sets.powerset :as pset :refer [powerset intersections]]))
 ;; @@
 ;; =>
@@ -40,7 +40,7 @@
 ;;; 
 ;;; $$\dfrac{}{0\in \mathbb{N}}  \quad \forall n. \dfrac{\\{n\\}\subseteq\mathbb{N}}{succ(n)\in \mathbb{N}}$$
 ;;; 
-;;; Another example is the set of strings over an alphabet @@\Sigma@@, denoted by $\Sigma^*$.
+;;; Another example is the set of strings over an alphabet @@\Sigma@@, denoted by @@\Sigma^*@@.
 ;;; 
 ;;; $$\dfrac{}{\epsilon\in \Sigma^\*}  \quad \forall x. \forall a. a\in\Sigma \implies \dfrac{\\{x\\}\subseteq\Sigma^\*}{ax \in \Sigma^*}$$
 ;;; 
@@ -53,6 +53,10 @@
   [[T :type]]
   (==> (set T) T :type))
 ;; @@
+;; ->
+;;; [Warning] redefinition as term:  rules
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>rules</span>","value":"rules"}],"value":"[:defined :term rules]"}
 ;; <=
@@ -71,6 +75,10 @@
              (subset T X E)
              (elem T y E)))))
 ;; @@
+;; ->
+;;; [Warning] redefinition as term:  closed-set
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>closed-set</span>","value":"closed-set"}],"value":"[:defined :term closed-set]"}
 ;; <=
@@ -86,6 +94,10 @@
   (intersections T (lambda [E (set T)]
                        (closed-set T R E))))
 ;; @@
+;; ->
+;;; [Warning] redefinition as term:  inductive-set
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>inductive-set</span>","value":"inductive-set"}],"value":"[:defined :term inductive-set]"}
 ;; <=
@@ -98,6 +110,13 @@
   (==> (closed-set T R Q)
        (subset T (inductive-set T R) Q)))
 ;; @@
+;; ->
+;;; [Warning] redefinition as theorem:  closed-set-lower-bound
+;;; 
+;; <-
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>closed-set-lower-bound</span>","value":"closed-set-lower-bound"}],"value":"[:declared :theorem closed-set-lower-bound]"}
+;; <=
 
 ;; @@
 (proof closed-set-lower-bound
@@ -157,45 +176,171 @@
 ;; <=
 
 ;; @@
-(defthm inductive-prop
-  ""
+(defthm inductive-subset-prop
+  "If a property `P` has the inductive set defined by
+  rules `R` as subset, then each element of the
+  inductive set verifies the property."
   [[T :type] [R (rules T)] [P (==> T :type)]]
-  (==> (subset T (inductive-set T R)
-               (lambda [x T]
-                  (and (elem T x (inductive-set T R))
-                       (P x))))
+  (==> (subset T (inductive-set T R) P)
        (forall [x T]
           (==> (elem T x (inductive-set T R))
                (P x)))))
 ;; @@
+;; ->
+;;; [Warning] redefinition as theorem:  inductive-subset-prop
+;;; 
+;; <-
 ;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>inductive-prop</span>","value":"inductive-prop"}],"value":"[:declared :theorem inductive-prop]"}
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>inductive-subset-prop</span>","value":"inductive-subset-prop"}],"value":"[:declared :theorem inductive-subset-prop]"}
 ;; <=
 
 ;; @@
-(proof inductive-prop
+(proof inductive-subset-prop
    :script
-   )
+   (assume [HP (subset T (inductive-set T R) P)]
+     (assume [x T
+              Hx (elem T x (inductive-set T R))]
+        (have a (P x) :by (HP x Hx))
+        (have b (forall [x T]
+                   (==> (elem T x (inductive-set T R))
+                        (P x))) :discharge [x Hx a]))
+      (qed b)))
 ;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>inductive-subset-prop</span>","value":"inductive-subset-prop"}],"value":"[:qed inductive-subset-prop]"}
+;; <=
 
 ;; @@
-(defthm rule-induction
-  "The principle of rule induction."
+(defthm inductive-closed-prop
+  "If a property `P` is `R`-closed, then each element of the
+  inductive set verifies the property."
   [[T :type] [R (rules T)] [P (==> T :type)]]
-  (==> (forall [X (set T)]
-           (forall [y T]
-               (==> (R X y)
-                    (forall [x T]
-                       (==> (elem T x X)
-                            (and (elem T x (inductive-set T R))
-                                 (P x))))
-                    (P y))))
+  (==> (closed-set T R P)
        (forall [x T]
           (==> (elem T x (inductive-set T R))
                (P x)))))
 ;; @@
+;; ->
+;;; [Warning] redefinition as theorem:  inductive-closed-prop
+;;; 
+;; <-
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>inductive-closed-prop</span>","value":"inductive-closed-prop"}],"value":"[:declared :theorem inductive-closed-prop]"}
+;; <=
+
+;; @@
+(proof inductive-closed-prop
+   :script
+   (assume [H (closed-set T R P)]
+       (have a (subset T (inductive-set T R) P)
+             :by ((closed-set-lower-bound T R P) H))
+       (qed a)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>inductive-closed-prop</span>","value":"inductive-closed-prop"}],"value":"[:qed inductive-closed-prop]"}
+;; <=
+
+;; @@
+(defthm rule-induction
+  "Rule induction for property `P` about
+  inductive rules `R`."
+  [[T :type] [R (rules T)] [P (==> T :type)]]
+  (==> (forall [X (set T)]
+          (forall [y T]
+             (==> (R X y)
+                  (forall [x T]
+                     (==> (elem T x X) 
+                          (P x)))
+                  (P y))))
+       (forall [x T]
+          (==> (elem T x (inductive-set T R))
+               (P x)))))
+;; @@
+;; ->
+;;; [Warning] redefinition as theorem:  rule-induction
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>rule-induction</span>","value":"rule-induction"}],"value":"[:declared :theorem rule-induction]"}
+;; <=
+
+;; @@
+(proof rule-induction :term (inductive-closed-prop T R P))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>rule-induction</span>","value":"rule-induction"}],"value":"[:qed rule-induction]"}
+;; <=
+
+;; @@
+(defaxiom nat
+  ""
+  []
+  :type)
+;; @@
+;; ->
+;;; [Warning] redefinition as axiom:  nat
+;;; 
+;; <-
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:axiom</span>","value":":axiom"},{"type":"html","content":"<span class='clj-symbol'>nat</span>","value":"nat"}],"value":"[:declared :axiom nat]"}
+;; <=
+
+;; @@
+(defaxiom zero
+  ""
+  []
+  nat)
+;; @@
+;; ->
+;;; [Warning] redefinition as axiom:  zero
+;;; 
+;; <-
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:axiom</span>","value":":axiom"},{"type":"html","content":"<span class='clj-symbol'>zero</span>","value":"zero"}],"value":"[:declared :axiom zero]"}
+;; <=
+
+;; @@
+(defaxiom succ
+  ""
+  []
+  (==> nat nat))
+;; @@
+;; ->
+;;; [Warning] redefinition as axiom:  succ
+;;; 
+;; <-
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:axiom</span>","value":":axiom"},{"type":"html","content":"<span class='clj-symbol'>succ</span>","value":"succ"}],"value":"[:declared :axiom succ]"}
+;; <=
+
+;; @@
+(definition nat-rules
+  "The inductive rules for the natural numbers."
+  []
+  (lambda [X (set nat)]
+     (lambda [y nat]
+        (or (and (seteq nat X (emptyset nat))
+                 (equal nat y zero))
+            (forall [n nat]
+                (and (seteq nat X (lambda [k nat] (equal nat k n)))
+                     (equal nat y (succ n))))))))
+;; @@
+;; ->
+;;; [Warning] redefinition as term:  nat-rules
+;;; 
+;; <-
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>nat-rules</span>","value":"nat-rules"}],"value":"[:defined :term nat-rules]"}
+;; <=
+
+;; @@
+(definition nat-set
+  "The inductive set of natural numbers."
+  []
+  (inductive-set nat nat-rules))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>nat-set</span>","value":"nat-set"}],"value":"[:defined :term nat-set]"}
 ;; <=
 
 ;; @@
