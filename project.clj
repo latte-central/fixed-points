@@ -4,7 +4,7 @@
   :license {:name "Creative Commons CC-BY-SA 4.0"
             :url "https://creativecommons.org/licenses/by-sa/4.0/"}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [latte "0.3.1-SNAPSHOT"]
+                 [latte "0.3.3-SNAPSHOT"]
                  [latte-sets "0.0.5-SNAPSHOT"]]
   :codox {:metadata {:doc/format :markdown}
           :namespaces [latte-sets.core]}
