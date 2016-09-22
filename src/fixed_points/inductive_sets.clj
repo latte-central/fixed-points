@@ -168,10 +168,28 @@
   "Membership for inductive set"
   [[T :type] [R (rules T)] [X (set T)] [y T]]
   (==> (R X y)
+       (subset T X (inductive-set T R))
        (elem T y (inductive-set T R))))
 ;; @@
+;; ->
+;;; [Warning] redefinition as theorem:  elem-inductive-set
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>elem-inductive-set</span>","value":"elem-inductive-set"}],"value":"[:declared :theorem elem-inductive-set]"}
+;; <=
+
+;; @@
+(proof elem-inductive-set
+   :script
+   (assume [H1 (R X y)
+            H2 (subset T X (inductive-set T R))]
+      (have <a> (elem T y (inductive-set T R))
+            :by ((closed-inductive-set T R) X y H1 H2))
+      (qed <a>)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>elem-inductive-set</span>","value":"elem-inductive-set"}],"value":"[:qed elem-inductive-set]"}
 ;; <=
 
 ;; **
@@ -219,6 +237,10 @@
           (==> (elem T x (inductive-set T R))
                (P x)))))
 ;; @@
+;; ->
+;;; [Warning] redefinition as theorem:  inductive-closed-prop
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>inductive-closed-prop</span>","value":"inductive-closed-prop"}],"value":"[:declared :theorem inductive-closed-prop]"}
 ;; <=
@@ -263,7 +285,7 @@
 ;; <=
 
 ;; **
-;;; ## Example: the inductive set of natural number
+;;; ## Example: the inductive set of natural numbers
 ;; **
 
 ;; @@
@@ -347,6 +369,23 @@
 ;; <=
 
 ;; @@
+(defthm nat-rule-induction
+  "Rule induction for property `P` about
+  natural numbers."
+  [[P (==> T :type)]]
+  (==> (forall [N (set nat)]
+          (forall [n nat]
+             (==> (R N n)
+                  (forall [k nat]
+                     (==> (elem nat k N) 
+                          (P k)))
+                  (P n))))
+       (forall [n nat]
+          (==> (elem nat n nat-set)
+               (P n)))))
+;; @@
+
+;; @@
 (defthm nat-induction
   "Rule induction for property `P` about
   natural numbers."
@@ -356,10 +395,6 @@
           (==> (P k) (P (succ k))))
        (forall-in [n nat nat-set] (P n))))
 ;; @@
-;; ->
-;;; [Warning] redefinition as theorem:  nat-induction
-;;; 
-;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>nat-induction</span>","value":"nat-induction"}],"value":"[:declared :theorem nat-induction]"}
 ;; <=
@@ -370,26 +405,23 @@
     (assume [Hz (P zero)
              Hs (forall-in [k nat nat-set]
                    (==> (P k) (P (succ k))))]
-      (assume [N (set nat)
-               n nat
-               HNn (nat-rules N n)
-               HN (forall-in [k nat N] (P k))]
-         "case zero"
-         (assume [Hzero (and (seteq nat N (emptyset nat))
-                             (equal nat n zero))]
-            (have <a1> (P n) :by ((eq/eq-subst nat P zero n)
-                                  ((eq/eq-sym nat n zero) (p/%and-elim-right Hzero))
-                                  Hz))
-            (have <a> _ :discharge [Hzero <a1>]))
-         "case (succ k)"
-         (assume [Hsucc (forall [m nat]
-                           (and (seteq nat N (lambda [k nat] (equal nat k m)))
-                                (equal nat n (succ m))))]
-            (assume [m nat
-                     Hm (P m)]
-              (have <b1> (elem nat m N) :by ((elem-seteq-equal nat N m) 
-                                             (p/%and-elim-left (Hsucc m)))))))))
-              ;;(have <b2> (P (succ m)) :by (Hs m <b1> Hm)))))))
+       (assume [n nat
+                Hn (elem nat n nat-set)]
+          (assume [N (set nat)
+                   HNn (nat-rules N n)]
+             (have <a> (==> (==> (and (seteq nat N (emptyset nat))
+                                      (equal nat n zero))
+                                 (P n))
+                            (==> (forall [m nat]
+                                   (and (seteq nat N (lambda [k nat] (equal nat k m)))
+                                        (equal nat n (succ m))))
+                                 (P n))
+                            (P n)) :by ((p/or-elim (and (seteq nat N (emptyset nat))
+                                                        (equal nat n zero))
+                                                   (forall [m nat]
+                                                      (and (seteq nat N (lambda [k nat] (equal nat k m)))
+                                                           (equal nat n (succ m)))))
+                                        HNn (P n)))))))
 ;; @@
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:ko</span>","value":":ko"},{"type":"list-like","open":"<span class='clj-map'>{</span>","close":"<span class='clj-map'>}</span>","separator":", ","items":[{"type":"list-like","open":"","close":"","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:proof-incomplete</span>","value":":proof-incomplete"},{"type":"html","content":"<span class='clj-symbol'>nat-induction</span>","value":"nat-induction"}],"value":"[:proof-incomplete nat-induction]"}],"value":"{:proof-incomplete nat-induction}"}],"value":"[:ko {:proof-incomplete nat-induction}]"}
