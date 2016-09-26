@@ -53,6 +53,10 @@
   [[T :type]]
   (==> (set T) T :type))
 ;; @@
+;; ->
+;;; [Warning] redefinition as term:  rules
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>rules</span>","value":"rules"}],"value":"[:defined :term rules]"}
 ;; <=
@@ -75,6 +79,10 @@
              (subset T X E)
              (elem T y E)))))
 ;; @@
+;; ->
+;;; [Warning] redefinition as term:  closed-set
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>closed-set</span>","value":"closed-set"}],"value":"[:defined :term closed-set]"}
 ;; <=
@@ -94,6 +102,10 @@
   (intersections T (lambda [E (set T)]
                        (closed-set T R E))))
 ;; @@
+;; ->
+;;; [Warning] redefinition as term:  inductive-set
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>inductive-set</span>","value":"inductive-set"}],"value":"[:defined :term inductive-set]"}
 ;; <=
@@ -106,6 +118,10 @@
   (==> (closed-set T R Q)
        (subset T (inductive-set T R) Q)))
 ;; @@
+;; ->
+;;; [Warning] redefinition as theorem:  inductive-set-lower-bound
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>inductive-set-lower-bound</span>","value":"inductive-set-lower-bound"}],"value":"[:declared :theorem inductive-set-lower-bound]"}
 ;; <=
@@ -134,9 +150,27 @@
   [[T :type] [R (rules T)]]
   (closed-set T R (inductive-set T R)))
 ;; @@
+;; ->
+;;; [Warning] redefinition as theorem:  closed-inductive-set
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>closed-inductive-set</span>","value":"closed-inductive-set"}],"value":"[:declared :theorem closed-inductive-set]"}
 ;; <=
+
+;; **
+;;; This means :
+;;; 
+;;; ```clojure
+;;; (forall [X (set T)]
+;;;       (forall [y T]
+;;;         (==> (R X y)
+;;;              (subset T X (inductive-set T R))
+;;;              (elem T y (inductive-set T R))))))
+;;; ```
+;;; 
+;;; The proof is not difficult.
+;; **
 
 ;; @@
 (proof closed-inductive-set
@@ -197,38 +231,7 @@
 ;; **
 
 ;; @@
-(defthm inductive-subset-prop
-  "If a property `P` has the inductive set defined by
-  rules `R` as subset, then each element of the
-  inductive set verifies the property."
-  [[T :type] [R (rules T)] [P (==> T :type)]]
-  (==> (subset T (inductive-set T R) P)
-       (forall [x T]
-          (==> (elem T x (inductive-set T R))
-               (P x)))))
-;; @@
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>inductive-subset-prop</span>","value":"inductive-subset-prop"}],"value":"[:declared :theorem inductive-subset-prop]"}
-;; <=
-
-;; @@
-(proof inductive-subset-prop
-   :script
-   (assume [HP (subset T (inductive-set T R) P)]
-     (assume [x T
-              Hx (elem T x (inductive-set T R))]
-        (have a (P x) :by (HP x Hx))
-        (have b (forall [x T]
-                   (==> (elem T x (inductive-set T R))
-                        (P x))) :discharge [x Hx a]))
-      (qed b)))
-;; @@
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>inductive-subset-prop</span>","value":"inductive-subset-prop"}],"value":"[:qed inductive-subset-prop]"}
-;; <=
-
-;; @@
-(defthm inductive-closed-prop
+(defthm rule-induction
   "If a property `P` is `R`-closed, then each element of the
   inductive set verifies the property."
   [[T :type] [R (rules T)] [P (==> T :type)]]
@@ -238,47 +241,20 @@
                (P x)))))
 ;; @@
 ;; ->
-;;; [Warning] redefinition as theorem:  inductive-closed-prop
+;;; [Warning] redefinition as theorem:  rule-induction
 ;;; 
 ;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>inductive-closed-prop</span>","value":"inductive-closed-prop"}],"value":"[:declared :theorem inductive-closed-prop]"}
-;; <=
-
-;; @@
-(proof inductive-closed-prop
-   :script
-   (assume [H (closed-set T R P)]
-       (have a (subset T (inductive-set T R) P)
-             :by ((inductive-set-lower-bound T R P) H))
-       (qed a)))
-;; @@
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>inductive-closed-prop</span>","value":"inductive-closed-prop"}],"value":"[:qed inductive-closed-prop]"}
-;; <=
-
-;; @@
-(defthm rule-induction
-  "Rule induction for property `P` about
-  inductive rules `R`."
-  [[T :type] [R (rules T)] [P (==> T :type)]]
-  (==> (forall [X (set T)]
-          (forall [y T]
-             (==> (R X y)
-                  (forall [x T]
-                     (==> (elem T x X) 
-                          (P x)))
-                  (P y))))
-       (forall [x T]
-          (==> (elem T x (inductive-set T R))
-               (P x)))))
-;; @@
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>rule-induction</span>","value":"rule-induction"}],"value":"[:declared :theorem rule-induction]"}
 ;; <=
 
 ;; @@
-(proof rule-induction :term (inductive-closed-prop T R P))
+(proof rule-induction
+   :script
+   (assume [H (closed-set T R P)]
+       (have a (subset T (inductive-set T R) P)
+             :by ((inductive-set-lower-bound T R P) H))
+       (qed a)))
 ;; @@
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>rule-induction</span>","value":"rule-induction"}],"value":"[:qed rule-induction]"}
@@ -294,6 +270,10 @@
   []
   :type)
 ;; @@
+;; ->
+;;; [Warning] redefinition as axiom:  nat
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:axiom</span>","value":":axiom"},{"type":"html","content":"<span class='clj-symbol'>nat</span>","value":"nat"}],"value":"[:declared :axiom nat]"}
 ;; <=
@@ -304,6 +284,10 @@
   []
   nat)
 ;; @@
+;; ->
+;;; [Warning] redefinition as axiom:  zero
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:axiom</span>","value":":axiom"},{"type":"html","content":"<span class='clj-symbol'>zero</span>","value":"zero"}],"value":"[:declared :axiom zero]"}
 ;; <=
@@ -314,6 +298,10 @@
   []
   (==> nat nat))
 ;; @@
+;; ->
+;;; [Warning] redefinition as axiom:  succ
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:axiom</span>","value":":axiom"},{"type":"html","content":"<span class='clj-symbol'>succ</span>","value":"succ"}],"value":"[:declared :axiom succ]"}
 ;; <=
@@ -330,6 +318,10 @@
                 (and (seteq nat X (lambda [k nat] (equal nat k n)))
                      (equal nat y (succ n))))))))
 ;; @@
+;; ->
+;;; [Warning] redefinition as term:  nat-rules
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>nat-rules</span>","value":"nat-rules"}],"value":"[:defined :term nat-rules]"}
 ;; <=
@@ -340,6 +332,10 @@
   []
   (inductive-set nat nat-rules))
 ;; @@
+;; ->
+;;; [Warning] redefinition as term:  nat-set
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>nat-set</span>","value":"nat-set"}],"value":"[:defined :term nat-set]"}
 ;; <=
@@ -351,6 +347,10 @@
   (==> (seteq T s (lambda [y T] (equal  T y x)))
        (elem T x s)))
 ;; @@
+;; ->
+;;; [Warning] redefinition as theorem:  elem-seteq-equal
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>elem-seteq-equal</span>","value":"elem-seteq-equal"}],"value":"[:declared :theorem elem-seteq-equal]"}
 ;; <=
@@ -369,21 +369,89 @@
 ;; <=
 
 ;; @@
-(defthm nat-rule-induction
+(defthm nat-induct-closed
   "Rule induction for property `P` about
   natural numbers."
-  [[P (==> T :type)]]
-  (==> (forall [N (set nat)]
-          (forall [n nat]
-             (==> (R N n)
-                  (forall [k nat]
-                     (==> (elem nat k N) 
-                          (P k)))
-                  (P n))))
-       (forall [n nat]
-          (==> (elem nat n nat-set)
-               (P n)))))
+  [[P (==> nat :type)]]
+  (==> (P zero)
+       (forall [k nat] (==> (P k) (P (succ k))))
+       (closed-set nat nat-rules P)))
 ;; @@
+;; ->
+;;; [Warning] redefinition as theorem:  nat-induct-closed
+;;; 
+;; <-
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>nat-induct-closed</span>","value":"nat-induct-closed"}],"value":"[:declared :theorem nat-induct-closed]"}
+;; <=
+
+;; @@
+(proof nat-induct-closed
+    :script
+  (assume [Hz (P zero)
+           Hs (forall [k nat] (==> (P k) (P (succ k))))]
+    (assume [N (set nat)
+             n nat
+             HNn (nat-rules N n)
+             Hsub (subset nat N P)]
+      "We proceed by case analysis on nat-rules"
+      "The first case if if n=zero"
+      (assume [Hzero (and (seteq nat N (emptyset nat))
+                          (equal nat n zero))]
+        (have <a1> (P n)
+              :by ((eq/eq-subst nat P zero n)
+                   ((eq/eq-sym nat n zero) (p/%and-elim-right Hzero))
+                   Hz))
+        (have <a> _ :discharge [Hzero <a1>]))
+      "The second case if if n=(succ m) for some m."
+      (assume [m nat
+               Hm (and (seteq nat N (lambda [k nat] (equal nat k m)))
+                       (equal nat n (succ m)))]
+        (have <b1> (elem nat m N) 
+              :by ((elem-seteq-equal nat N m) 
+                   (p/%and-elim-left Hm)))
+        (have <b2> (P m) :by (Hsub m <b1>))
+        (have <b3> (P (succ m)) :by (Hs m <b2>))
+        (have <b4> (P n) :by ((eq/eq-subst nat P (succ m) n)
+                              ((eq/eq-sym nat n (succ m)) (p/%and-elim-right Hm))
+                              <b3>))
+        (have <b5> (forall [m nat]
+                     (==> (and (seteq nat N (lambda [k nat] (equal nat k m)))
+                               (equal nat n (succ m)))
+                          (P n))) :discharge [m Hm <b4>]))
+      (assume [H (forall [m nat]
+                   (and (seteq nat N (lambda [k nat] (equal nat k m)))
+                        (equal nat n (succ m))))]
+        (assume [m nat]
+          (have <b6> (P n) :by (<b5> m (H m)))
+          (have <b7> (==> nat (P n)) :discharge [m <b6>]))
+        (have <b8> (P n) :by (<b7> zero))
+        (have <b> (==> (forall [m nat]
+                         (and (seteq nat N (lambda [k nat] (equal nat k m)))
+                              (equal nat n (succ m))))
+                       (P n)) :discharge [H <b8>]))
+      "Joining the two cases..."
+      (have <c> (==> (==> (and (seteq nat N (emptyset nat))
+                               (equal nat n zero))
+                          (P n))
+                     (==> (forall [m nat]
+                            (and (seteq nat N (lambda [k nat] (equal nat k m)))
+                                 (equal nat n (succ m))))
+                          (P n))
+                     (P n))
+            :by ((p/or-elim (and (seteq nat N (emptyset nat))
+                                 (equal nat n zero))
+                            (forall [m nat]
+                              (and (seteq nat N (lambda [k nat] (equal nat k m)))
+                                   (equal nat n (succ m)))))
+                 HNn (P n)))
+      (have <d> (P n) :by (<c> <a> <b>))
+      (have <e> _ :discharge [N n HNn Hsub <d>]))
+    (qed <e>)))
+;; @@
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>nat-induct-closed</span>","value":"nat-induct-closed"}],"value":"[:qed nat-induct-closed]"}
+;; <=
 
 ;; @@
 (defthm nat-induction
@@ -391,42 +459,83 @@
   natural numbers."
   [[P (==> nat :type)]]
   (==> (P zero)
-       (forall-in [k nat nat-set]
+       (forall [k nat]
           (==> (P k) (P (succ k))))
        (forall-in [n nat nat-set] (P n))))
 ;; @@
+;; ->
+;;; [Warning] redefinition as theorem:  nat-induction
+;;; 
+;; <-
 ;; =>
 ;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>nat-induction</span>","value":"nat-induction"}],"value":"[:declared :theorem nat-induction]"}
 ;; <=
 
 ;; @@
-(try-proof nat-induction
-    :script
-    (assume [Hz (P zero)
-             Hs (forall-in [k nat nat-set]
-                   (==> (P k) (P (succ k))))]
-       (assume [n nat
-                Hn (elem nat n nat-set)]
-          (assume [N (set nat)
-                   HNn (nat-rules N n)]
-             (have <a> (==> (==> (and (seteq nat N (emptyset nat))
-                                      (equal nat n zero))
-                                 (P n))
-                            (==> (forall [m nat]
-                                   (and (seteq nat N (lambda [k nat] (equal nat k m)))
-                                        (equal nat n (succ m))))
-                                 (P n))
-                            (P n)) :by ((p/or-elim (and (seteq nat N (emptyset nat))
-                                                        (equal nat n zero))
-                                                   (forall [m nat]
-                                                      (and (seteq nat N (lambda [k nat] (equal nat k m)))
-                                                           (equal nat n (succ m)))))
-                                        HNn (P n)))))))
+(proof nat-induction
+   :script
+   (assume [Hz (P zero)
+            Hs (forall [k nat]
+                  (==> (P k) (P (succ k))))]
+      (have <a> (closed-set nat nat-rules P)
+            :by ((nat-induct-closed P) Hz Hs))
+      (have <b> (forall-in [n nat nat-set] (P n))
+            :by ((rule-induction nat nat-rules P)
+                 <a>))
+      (qed <b>)))
 ;; @@
 ;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:ko</span>","value":":ko"},{"type":"list-like","open":"<span class='clj-map'>{</span>","close":"<span class='clj-map'>}</span>","separator":", ","items":[{"type":"list-like","open":"","close":"","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:proof-incomplete</span>","value":":proof-incomplete"},{"type":"html","content":"<span class='clj-symbol'>nat-induction</span>","value":"nat-induction"}],"value":"[:proof-incomplete nat-induction]"}],"value":"{:proof-incomplete nat-induction}"}],"value":"[:ko {:proof-incomplete nat-induction}]"}
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>nat-induction</span>","value":"nat-induction"}],"value":"[:qed nat-induction]"}
 ;; <=
 
 ;; @@
+(defthm zero-elem-nat
+  "Zero is a natural number."
+  []
+  (elem nat zero nat-set))
+;; @@
+;; ->
+;;; [Warning] redefinition as theorem:  zero-elem-nat
+;;; 
+;; <-
+;; =>
+;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>zero-elem-nat</span>","value":"zero-elem-nat"}],"value":"[:declared :theorem zero-elem-nat]"}
+;; <=
 
+;; @@
+(proof zero-elem-nat
+    :script
+  (have <a> (seteq nat (emptyset nat) (emptyset nat))
+        :by (set/seteq-refl nat (emptyset nat)))
+  (have <b> (equal nat zero zero) :by (eq/eq-refl nat zero))
+  (have <c> _ :by (p/%and-intro <a> <b>))
+  (have <d> (nat-rules (emptyset nat) zero)
+        :by ((p/or-intro-left (and (seteq nat (emptyset nat) (emptyset nat)) (equal nat zero zero))
+                              (forall [n nat]
+                                (and
+                                 (seteq nat (emptyset nat) (lambda [k nat] (equal nat k n)))
+                                 (equal nat zero (succ n)))))
+             <c>))
+  (have <e> (subset nat (emptyset nat) nat-set)
+        :by (set/emptyset-subset-lower-bound nat nat-set))
+  (have <f> (elem nat zero nat-set)
+        :by ((elem-inductive-set nat nat-rules (emptyset nat) zero)
+             <d> <e>))
+  (qed <f>))
+;; @@
+
+;; @@
+(defthm succ-elem-nat
+  "The successor of a natural number is a natural number."
+  [[n nat]]
+  (==> (elem nat n nat-set)
+       (elem nat (succ n) nat-set)))
+;; @@
+
+;; @@
+(proof succ-elem-nat
+    :script
+  (assume [H (elem nat n nat-set)]
+    (have <c> (nat-rules (lambda [k nat] (equal nat k n)) (succ n)) 
+      )))
 ;; @@
