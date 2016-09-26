@@ -314,7 +314,7 @@
      (lambda [y nat]
         (or (and (seteq nat X (emptyset nat))
                  (equal nat y zero))
-            (forall [n nat]
+            (exists [n nat]
                 (and (seteq nat X (lambda [k nat] (equal nat k n)))
                      (equal nat y (succ n))))))))
 ;; @@
@@ -404,9 +404,12 @@
                    Hz))
         (have <a> _ :discharge [Hzero <a1>]))
       "The second case if if n=(succ m) for some m."
-      (assume [m nat
-               Hm (and (seteq nat N (lambda [k nat] (equal nat k m)))
-                       (equal nat n (succ m)))]
+      (assume [Hex (exists [m nat]
+                     (and (seteq nat N (lambda [k nat] (equal nat k m)))
+                          (equal nat n (succ m))))]
+        (assume [m nat
+                 Hm (and (seteq nat N (lambda [k nat] (equal nat k m)))
+                         (equal nat n (succ m)))]
         (have <b1> (elem nat m N) 
               :by ((elem-seteq-equal nat N m) 
                    (p/%and-elim-left Hm)))
@@ -419,29 +422,26 @@
                      (==> (and (seteq nat N (lambda [k nat] (equal nat k m)))
                                (equal nat n (succ m)))
                           (P n))) :discharge [m Hm <b4>]))
-      (assume [H (forall [m nat]
-                   (and (seteq nat N (lambda [k nat] (equal nat k m)))
-                        (equal nat n (succ m))))]
-        (assume [m nat]
-          (have <b6> (P n) :by (<b5> m (H m)))
-          (have <b7> (==> nat (P n)) :discharge [m <b6>]))
-        (have <b8> (P n) :by (<b7> zero))
-        (have <b> (==> (forall [m nat]
+        (have <b6> (P n) :by ((q/ex-elim nat (lambda [m nat]
+                                               (and (seteq nat N (lambda [k nat] (equal nat k m)))
+                                                    (equal nat n (succ m)))) (P n))
+                              Hex <b5>))
+        (have <b> (==> (exists [m nat]
                          (and (seteq nat N (lambda [k nat] (equal nat k m)))
                               (equal nat n (succ m))))
-                       (P n)) :discharge [H <b8>]))
+                       (P n)) :discharge [Hex <b6>]))
       "Joining the two cases..."
       (have <c> (==> (==> (and (seteq nat N (emptyset nat))
                                (equal nat n zero))
                           (P n))
-                     (==> (forall [m nat]
+                     (==> (exists [m nat]
                             (and (seteq nat N (lambda [k nat] (equal nat k m)))
                                  (equal nat n (succ m))))
                           (P n))
                      (P n))
             :by ((p/or-elim (and (seteq nat N (emptyset nat))
                                  (equal nat n zero))
-                            (forall [m nat]
+                            (exists [m nat]
                               (and (seteq nat N (lambda [k nat] (equal nat k m)))
                                    (equal nat n (succ m)))))
                  HNn (P n)))
@@ -511,7 +511,7 @@
   (have <c> _ :by (p/%and-intro <a> <b>))
   (have <d> (nat-rules (emptyset nat) zero)
         :by ((p/or-intro-left (and (seteq nat (emptyset nat) (emptyset nat)) (equal nat zero zero))
-                              (forall [n nat]
+                              (exists [n nat]
                                 (and
                                  (seteq nat (emptyset nat) (lambda [k nat] (equal nat k n)))
                                  (equal nat zero (succ n)))))
@@ -536,6 +536,54 @@
 (proof succ-elem-nat
     :script
   (assume [H (elem nat n nat-set)]
-    (have <c> (nat-rules (lambda [k nat] (equal nat k n)) (succ n)) 
-      )))
+    (have <a1> (seteq nat
+                      (lambda [k nat] (equal nat k n))
+                      (lambda [k nat] (equal nat k n)))
+          :by (set/seteq-refl nat (lambda [k nat] (equal nat k n))))
+    (have <a2> (equal nat (succ n) (succ n)) :by (eq/eq-refl nat (succ n)))
+    (have <a3> (and (seteq nat
+                           (lambda [k nat] (equal nat k n))
+                           (lambda [k nat] (equal nat k n)))
+                    (equal nat (succ n) (succ n)))
+          :by (p/%and-intro <a1> <a2>))
+    (have <a4> (exists [m nat]
+                 (and (seteq nat
+                             (lambda [k nat] (equal nat k n))
+                             (lambda [k nat] (equal nat k m)))
+                      (equal nat (succ n) (succ m))))
+          :by ((q/ex-intro nat
+                           (lambda [m nat]
+                             (and (seteq nat
+                                         (lambda [k nat] (equal nat k n))
+                                         (lambda [k nat] (equal nat k m)))
+                                  (equal nat (succ n) (succ m))))
+                           n) <a3>))
+    (have <a5> (nat-rules (lambda [k nat] (equal nat k n)) (succ n))
+          :by ((p/or-intro-right
+                (and (seteq nat
+                            (lambda [k nat] (equal nat k n))
+                            (emptyset nat))
+                     (equal nat (succ n) zero))
+                (exists [m nat]
+                  (and (seteq nat
+                              (lambda [k nat] (equal nat k n))
+                              (lambda [k nat] (equal nat k m)))
+                       (equal nat (succ n) (succ m)))))
+               <a4>))
+    (have <a> (nat-rules (lambda [k nat] (equal nat k n)) (succ n)) :by <a5>)
+    (assume [p nat
+             Hp (equal nat p n)]
+      (have <b1> (elem nat p nat-set)
+            :by ((eq/eq-subst nat nat-set n p)
+                 ((eq/eq-sym nat p n) Hp)
+                 H))
+      (have <b> (subset nat
+                        (lambda [k nat] (equal nat k n))
+                        nat-set) :discharge [p Hp <b1>]))
+    (have <c> (elem nat (succ n) nat-set)
+          :by ((elem-inductive-set nat nat-rules
+                                   (lambda [k nat] (equal nat k n))
+                                   (succ n))
+               <a> <b>))
+    (qed <c>)))
 ;; @@
