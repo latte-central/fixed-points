@@ -1,12 +1,29 @@
-;; gorilla-repl.fileformat = 1
+;;{
+;; ---
+;; title: The construction of Inductive Sets
+;; author:
+;; - name: Frederic Peschanski
+;; - affiliation: UPMC LIP6
+;; tags: [inductive sets, type theory, set theory, natural numbers]
+;; abstract:
+;; This document is both a construction and a detailed explanation of the
+;; notion of inductive set in the context of type theory. It is a litterate
+;; program for the LaTTe proof assistant.
+;;
+;; This document is Copyright (C) 2016 Frederic Peschanski CC-BY-SA 4.0
+;; ---
+;;}
 
-;; **
-;;; # Inductive sets
-;;; 
-;;; In this document we discuss one possible formalization of *inductive sets*. We do not directly used the fixed point theorems but we see how inductively-defined sets can be formalized using a relational approach.
-;; **
+;;{
+;; In this document we discuss one possible formalization of *inductive sets*. The two main source of inspiration for this document is the book *Introduction to bisimulation and coinduction* by Davide Sangiorgi as well as the course notes by Glynn Winskel about discrete mathematics, cf. https://www.cl.cam.ac.uk/~gw104/.
 
-;; @@
+;; The main motivation is this:
+
+;; Inductive sets are omnipresent in both mathematics (e.g. Peano arithmetics, proof theory, etc.) and computer science (tree structures, recursive functions, etc.).  However, the underlying principles  are seldom if imprecisely documented. In particular, we will study how inductive sets can be built from set-theoretic principles.
+
+;; A further motivation is to elaborate the construction of inductive sets in the context of a proof assistant based on a type theory. This way, nothing that could be judged as a detail is left to change in the development. Moreover, all the proofs are checked by the computer.
+;;}
+
 (ns fixed-points.inductive-sets
   (:refer-clojure :exclude [and or not set])
 
@@ -20,56 +37,45 @@
             [latte-sets.core :as set :refer [set elem
                                              subset seteq emptyset forall-in]]
             [latte-sets.powerset :as pset :refer [powerset intersections]]))
-;; @@
-;; =>
-;;; {"type":"html","content":"<span class='clj-nil'>nil</span>","value":"nil"}
-;; <=
 
-;; @@
-(use 'clojure.repl)
-;; @@
-;; =>
-;;; {"type":"html","content":"<span class='clj-nil'>nil</span>","value":"nil"}
-;; <=
+;;{
+;; # Sets defined by inductive rules
 
-;; **
-;;; ## Rules
-;;; 
-;;; Inductively defined sets are often described using logical rules.
-;;; For example, the set of natural number can be described as the *least* set satisfying the rules below.
-;;; 
-;;; $$\dfrac{}{0\in \mathbb{N}}  \quad \forall n. \dfrac{\\{n\\}\subseteq\mathbb{N}}{succ(n)\in \mathbb{N}}$$
-;;; 
-;;; Another example is the set of strings over an alphabet @@\Sigma@@, denoted by @@\Sigma^*@@.
-;;; 
-;;; $$\dfrac{}{\epsilon\in \Sigma^\*}  \quad \forall x. \forall a. a\in\Sigma \implies \dfrac{\\{x\\}\subseteq\Sigma^\*}{ax \in \Sigma^*}$$
-;;; 
-;;; Given a type @@T@@, a rule instance on @@T@@ is of the form @@(X,y)@@ with @@X@@ a set of @@T@@-elements and @@y@@ a @@T@@-element. The intended meaning is that if @@X@@ is a subset of the inductive set, then we can deduce that @@y@@ is *also* an element.   Hence, a rule-based definition is a relation from powersets to sets.
-;; **
+;; Inductively defined sets are most often described using logical rules. As an introduction to the topic,
+;; we will consider a few example of well-known inductive sets.
 
-;; @@
+;; A first example is the set of natural number, which is often described as the *least* set satisfying the rules below.
+
+;; $$\dfrac{}{0\in \mathbb{N}}  \quad \forall n. \dfrac{\\{n\\}\subseteq\mathbb{N}}{succ(n)\in \mathbb{N}}$$
+
+;; We shall see with all details what this definition means, formally.
+
+;; Another example is the set of strings over an alphabet $\Sigma$, denoted by $\Sigma^*$.
+
+;; $$\dfrac{}{\epsilon\in \Sigma^\*}  \quad \forall x. \forall a. a\in\Sigma \implies \dfrac{\\{x\\}\subseteq\Sigma^\*}{ax \in \Sigma^*}$$
+
+;; A slightly different kind of inductive definition is provided by the notion of the *transitive closure of a relation*.
+;; If we suppose a relation $R$ (from a type $T$ to itself), then its transitive clojure, denoted by $R^+$, is the *least* relation satisfying:
+
+;; $$\dfrac{}{(a,b)\in R^+} \text{for any } (a,b) \in R \quad \dfrac{(a,b), (b,c) \subseteq R^+}{(a,c) \in R^+}$$
+
+;; We are now looking for a general, type-theoretic, definition of these kinds of sets of rules.
+
+;; Given a type $T$, a rule instance on $T$ is of the form $(X,y)$ with $X$ a set of $T$-elements and $y$ a $T$-element. The intended meaning is that if $X$ is a subset of the inductive set, then we can deduce that $y$ is *also* an element.   Hence, a rule-based definition is a relation from powersets to sets.
+;;}
+
 (definition rules
   "The constructor for rule sets."
   [[T :type]]
   (==> (set T) T :type))
-;; @@
-;; ->
-;;; [Warning] redefinition as term:  rules
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>rules</span>","value":"rules"}],"value":"[:defined :term rules]"}
-;; <=
 
-;; **
-;;; ## Closed sets
-;; **
+;;{
+;; ## Closed sets
 
-;; **
-;;; We next introduce the notion of a @@R@@-closed set, with @@R@@ a rule set.
-;; **
+;; We next introduce the notion of a $R$-closed set, with $R$ a rule set as defined previously.
 
-;; @@
+;;}
+
 (definition closed-set
   "The set `E` is `R`-closed."
   [[T :type] [R (rules T)] [E (set T)]]
@@ -78,142 +84,151 @@
         (==> (R X y)
              (subset T X E)
              (elem T y E)))))
-;; @@
-;; ->
-;;; [Warning] redefinition as term:  closed-set
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>closed-set</span>","value":"closed-set"}],"value":"[:defined :term closed-set]"}
-;; <=
 
-;; **
-;;; ## Inductive sets
-;; **
+;;{
+;; The definition above provide a precise meaning for the intuitive understanding of the inductive rules.
+;; if a pair $(X, y)$ is a rule instance, i.e. an element of the relation $R$ in the definition, and if $X$ is a subset of an $R$-closed set (which is named $E$ in the definition),
+;; then $y$ has to be an element of $E$ also.
+;;}
 
-;; **
-;;; We can now provide the set inductively defined on a rule set @@R@@ as the intersection of all @@R@@-closed sets.
-;; **
+;;{
+;; ## Inductive sets
 
-;; @@
+;; The formal definition of an inductive set defined by inference rules is based on the smallest set satisfying the relation.
+;; This set can be obtained by taking the intersection of all the $R$-closed sets of type $T$, i.e:
+
+;; $$\bigcup \{ E \mid E \text{ is an } R \text{-closed set}\}$$
+
+;; In LaTTe, this translates as follows.
+
+;;}
+
+
 (definition inductive-set
   "The set inductively defined on `R`."
   [[T :type] [R (rules T)]]
   (intersections T (lambda [E (set T)]
-                       (closed-set T R E))))
-;; @@
-;; ->
-;;; [Warning] redefinition as term:  inductive-set
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>inductive-set</span>","value":"inductive-set"}],"value":"[:defined :term inductive-set]"}
-;; <=
+                     (closed-set T R E))))
 
-;; @@
+;;{
+;; The definition of `intersections` (more precisely `latte-sets.powerset/intersections`) is as follows.
+
+;; ```clojure
+;; (intersections T X)
+;; \equiv (lambda [y T] (forall [x (set T)] (==> (set-elem T x X) (elem T y x))))
+;; ```
+
+;; In the usual mathematical notation, this would be denoted by: $\{y:T \mid \forall x\in X,~y\in x\}$.
+
+;; Clearly there is a least fixed point hidden in the definition above, but in fact we do not need to make this explicit.
+;; One property that still remains important is that the inductive set is a lower bound for the set of $R$-closed sets.
+
+;;}
+
 (defthm inductive-set-lower-bound
   "If `Q` is an `R`-closed set, then the inductive
   set defined on `R` is included in `Q`."
   [[T :type] [R (rules T)] [Q (set T)]]
   (==> (closed-set T R Q)
        (subset T (inductive-set T R) Q)))
-;; @@
-;; ->
-;;; [Warning] redefinition as theorem:  inductive-set-lower-bound
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>inductive-set-lower-bound</span>","value":"inductive-set-lower-bound"}],"value":"[:declared :theorem inductive-set-lower-bound]"}
-;; <=
 
-;; @@
+;;{
+;; The proof follows.
+;;}
+
 (proof inductive-set-lower-bound
     :script
-    (assume [H (closed-set T R Q)]
-       (have a (subset T (inductive-set T R) Q)
-           :by ((pset/intersections-lower-bound T (lambda [E (set T)]
+  ;;{
+  ;; Our main assumption is that the set $Q$ is $R$-closed.
+  ;;}
+  (assume [H (closed-set T R Q)]
+    ;;{
+    ;; The expected property directly results from the property that
+    ;; generalized intersections are lower bounds for the sets the range over.
+    ;;}
+    (have <a> (subset T (inductive-set T R) Q)
+             :by ((pset/intersections-lower-bound T (lambda [E (set T)]
                                                         (closed-set T R E)))
                 Q H))
-       (qed a)))
-;; @@
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>inductive-set-lower-bound</span>","value":"inductive-set-lower-bound"}],"value":"[:qed inductive-set-lower-bound]"}
-;; <=
+    (qed <a>)))
 
-;; **
-;;; A property of this set is that it is itself @@R@@-closed.
-;; **
+;;{
+;; Another very important property is that the inductive sets (hence the generalized intersection) is
+;; the least $R$-closed set, i.e. it is itself an $R$-closed set.
+;;}
 
-;; @@
 (defthm closed-inductive-set
   "The set inductively defined on `R` is `R`-closed."
   [[T :type] [R (rules T)]]
   (closed-set T R (inductive-set T R)))
-;; @@
-;; ->
-;;; [Warning] redefinition as theorem:  closed-inductive-set
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>closed-inductive-set</span>","value":"closed-inductive-set"}],"value":"[:declared :theorem closed-inductive-set]"}
-;; <=
 
-;; **
-;;; This means :
-;;; 
-;;; ```clojure
-;;; (forall [X (set T)]
-;;;       (forall [y T]
-;;;         (==> (R X y)
-;;;              (subset T X (inductive-set T R))
-;;;              (elem T y (inductive-set T R))))))
-;;; ```
-;;; 
-;;; The proof is not difficult.
-;; **
+;;{
+;; This means :
+;; 
+;; ```clojure
+;; (forall [X (set T)]
+;;       (forall [y T]
+;;         (==> (R X y)
+;;              (subset T X (inductive-set T R))
+;;              (elem T y (inductive-set T R))))))
+;; ```
+;; 
+;; The proof is quite straightforward.
+;;}
 
-;; @@
 (proof closed-inductive-set
-   :script
-   (assume [X (set T)
-            y T
-            H1 (R X y)
-            H2 (subset T X (inductive-set T R))]
-      (assume [Y (set T)
-               HY (closed-set T R Y)]
-         (have a (subset T (inductive-set T R) Y)
-               :by ((inductive-set-lower-bound T R Y) HY))
-         (have b (subset T X Y)
-               :by ((set/subset-trans T X (inductive-set T R) Y)
-                    H2 a))
-         (have c (elem T y Y) :by (HY X y H1 b))
-         (have d (forall [Y (set T)]
+    :script
+  ;;{
+  ;; We have four assumptions: the assumption set $X$ and the element $y$
+  ;; as well as the fact that they are in $R$. Moreover $X$ is assumed
+  ;; to be a subset of the inductive set.
+  ;;}
+  (assume [X (set T)
+           y T
+           H1 (R X y)
+           H2 (subset T X (inductive-set T R))]
+    ;;{
+    ;; Now consider an arbitrary set $Y$ that is $R$-closed.
+    ;;}
+    (assume [Y (set T)
+             HY (closed-set T R Y)]
+      ;;{
+      ;; We now that the inductive set is *below* $Y$ in the subset relation
+      ;;}
+      (have a (subset T (inductive-set T R) Y)
+            :by ((inductive-set-lower-bound T R Y) HY))
+      ;;{
+      ;; And by transitivity $X$ is below $Y$ (using hypothesis `H2`).
+      ;;}
+      (have b (subset T X Y)
+            :by ((set/subset-trans T X (inductive-set T R) Y)
+                 H2 a))
+      ;;{
+      ;; Hence $y$ is an element of $Y$ because the later is $R$-closed.
+      ;;}
+      (have c (elem T y Y) :by (HY X y H1 b))
+      ;;{
+      ;; And from this we reach the conclusion.
+      ;;}
+      (have d (forall [Y (set T)]
                     (==> (closed-set T R Y)
                          (elem T y Y)))
                :discharge [Y HY c]))
        (qed d)))
-;; @@
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>closed-inductive-set</span>","value":"closed-inductive-set"}],"value":"[:qed closed-inductive-set]"}
-;; <=
 
-;; @@
+;;{
+;; For convenience, we state the conditions for a term $y$ to
+;; be an element of the inductive sets defined by rules $R$.
+;; (with the trivial proof).
+;;}
+
 (defthm elem-inductive-set
   "Membership for inductive set"
   [[T :type] [R (rules T)] [X (set T)] [y T]]
   (==> (R X y)
        (subset T X (inductive-set T R))
        (elem T y (inductive-set T R))))
-;; @@
-;; ->
-;;; [Warning] redefinition as theorem:  elem-inductive-set
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>elem-inductive-set</span>","value":"elem-inductive-set"}],"value":"[:declared :theorem elem-inductive-set]"}
-;; <=
 
-;; @@
 (proof elem-inductive-set
    :script
    (assume [H1 (R X y)
@@ -221,16 +236,13 @@
       (have <a> (elem T y (inductive-set T R))
             :by ((closed-inductive-set T R) X y H1 H2))
       (qed <a>)))
-;; @@
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>elem-inductive-set</span>","value":"elem-inductive-set"}],"value":"[:qed elem-inductive-set]"}
-;; <=
 
-;; **
-;;; ## Rule induction
-;; **
+;;{
+;; # Rule induction
 
-;; @@
+;; The general principle of rule induction is then obtained as follows.
+;;}
+
 (defthm rule-induction
   "If a property `P` is `R`-closed, then each element of the
   inductive set verifies the property."
@@ -239,74 +251,44 @@
        (forall [x T]
           (==> (elem T x (inductive-set T R))
                (P x)))))
-;; @@
-;; ->
-;;; [Warning] redefinition as theorem:  rule-induction
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>rule-induction</span>","value":"rule-induction"}],"value":"[:declared :theorem rule-induction]"}
-;; <=
 
-;; @@
+;;{
+;; The proof simply relies on the fact the the inductive-set is a lower bound.
+;;}
+
 (proof rule-induction
    :script
    (assume [H (closed-set T R P)]
        (have a (subset T (inductive-set T R) P)
              :by ((inductive-set-lower-bound T R P) H))
        (qed a)))
-;; @@
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>rule-induction</span>","value":"rule-induction"}],"value":"[:qed rule-induction]"}
-;; <=
 
-;; **
-;;; ## Example: the inductive set of natural numbers
-;; **
+;;{
+;; # Examples
+;;}
 
-;; @@
+;;{
+;; ## The set of natural numbers
+
+;; We will now construct the set of natural number as an inductive
+;; set defined by rules.
+;;}
+
 (defaxiom nat
   ""
   []
   :type)
-;; @@
-;; ->
-;;; [Warning] redefinition as axiom:  nat
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:axiom</span>","value":":axiom"},{"type":"html","content":"<span class='clj-symbol'>nat</span>","value":"nat"}],"value":"[:declared :axiom nat]"}
-;; <=
 
-;; @@
 (defaxiom zero
   ""
   []
   nat)
-;; @@
-;; ->
-;;; [Warning] redefinition as axiom:  zero
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:axiom</span>","value":":axiom"},{"type":"html","content":"<span class='clj-symbol'>zero</span>","value":"zero"}],"value":"[:declared :axiom zero]"}
-;; <=
 
-;; @@
 (defaxiom succ
   ""
   []
   (==> nat nat))
-;; @@
-;; ->
-;;; [Warning] redefinition as axiom:  succ
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:axiom</span>","value":":axiom"},{"type":"html","content":"<span class='clj-symbol'>succ</span>","value":"succ"}],"value":"[:declared :axiom succ]"}
-;; <=
 
-;; @@
 (definition nat-rules
   "The inductive rules for the natural numbers."
   []
@@ -317,45 +299,18 @@
             (exists [n nat]
                 (and (seteq nat X (lambda [k nat] (equal nat k n)))
                      (equal nat y (succ n))))))))
-;; @@
-;; ->
-;;; [Warning] redefinition as term:  nat-rules
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>nat-rules</span>","value":"nat-rules"}],"value":"[:defined :term nat-rules]"}
-;; <=
 
-;; @@
 (definition nat-set
   "The inductive set of natural numbers."
   []
   (inductive-set nat nat-rules))
-;; @@
-;; ->
-;;; [Warning] redefinition as term:  nat-set
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:defined</span>","value":":defined"},{"type":"html","content":"<span class='clj-keyword'>:term</span>","value":":term"},{"type":"html","content":"<span class='clj-symbol'>nat-set</span>","value":"nat-set"}],"value":"[:defined :term nat-set]"}
-;; <=
 
-;; @@
 (defthm elem-seteq-equal
   "membership property of a singleton set"
   [[T :type] [s (set T)] [x T]]
   (==> (seteq T s (lambda [y T] (equal  T y x)))
        (elem T x s)))
-;; @@
-;; ->
-;;; [Warning] redefinition as theorem:  elem-seteq-equal
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>elem-seteq-equal</span>","value":"elem-seteq-equal"}],"value":"[:declared :theorem elem-seteq-equal]"}
-;; <=
 
-;; @@
 (proof elem-seteq-equal
    :script
    (assume [H1 (seteq T s (lambda [y T] (equal T y x)))]
@@ -363,12 +318,7 @@
             :by (eq/eq-refl T x))
       (have <b> (elem T x s) :by ((p/%and-elim-right H1) x <a>))
       (qed <b>)))
-;; @@
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>elem-seteq-equal</span>","value":"elem-seteq-equal"}],"value":"[:qed elem-seteq-equal]"}
-;; <=
 
-;; @@
 (defthm nat-induct-closed
   "Rule induction for property `P` about
   natural numbers."
@@ -376,16 +326,7 @@
   (==> (P zero)
        (forall [k nat] (==> (P k) (P (succ k))))
        (closed-set nat nat-rules P)))
-;; @@
-;; ->
-;;; [Warning] redefinition as theorem:  nat-induct-closed
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>nat-induct-closed</span>","value":"nat-induct-closed"}],"value":"[:declared :theorem nat-induct-closed]"}
-;; <=
 
-;; @@
 (proof nat-induct-closed
     :script
   (assume [Hz (P zero)
@@ -448,12 +389,7 @@
       (have <d> (P n) :by (<c> <a> <b>))
       (have <e> _ :discharge [N n HNn Hsub <d>]))
     (qed <e>)))
-;; @@
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>nat-induct-closed</span>","value":"nat-induct-closed"}],"value":"[:qed nat-induct-closed]"}
-;; <=
 
-;; @@
 (defthm nat-induction
   "Rule induction for property `P` about
   natural numbers."
@@ -462,16 +398,7 @@
        (forall [k nat]
           (==> (P k) (P (succ k))))
        (forall-in [n nat nat-set] (P n))))
-;; @@
-;; ->
-;;; [Warning] redefinition as theorem:  nat-induction
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>nat-induction</span>","value":"nat-induction"}],"value":"[:declared :theorem nat-induction]"}
-;; <=
 
-;; @@
 (proof nat-induction
    :script
    (assume [Hz (P zero)
@@ -483,26 +410,12 @@
             :by ((rule-induction nat nat-rules P)
                  <a>))
       (qed <b>)))
-;; @@
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:qed</span>","value":":qed"},{"type":"html","content":"<span class='clj-symbol'>nat-induction</span>","value":"nat-induction"}],"value":"[:qed nat-induction]"}
-;; <=
 
-;; @@
 (defthm zero-elem-nat
   "Zero is a natural number."
   []
   (elem nat zero nat-set))
-;; @@
-;; ->
-;;; [Warning] redefinition as theorem:  zero-elem-nat
-;;; 
-;; <-
-;; =>
-;;; {"type":"list-like","open":"<span class='clj-vector'>[</span>","close":"<span class='clj-vector'>]</span>","separator":" ","items":[{"type":"html","content":"<span class='clj-keyword'>:declared</span>","value":":declared"},{"type":"html","content":"<span class='clj-keyword'>:theorem</span>","value":":theorem"},{"type":"html","content":"<span class='clj-symbol'>zero-elem-nat</span>","value":"zero-elem-nat"}],"value":"[:declared :theorem zero-elem-nat]"}
-;; <=
 
-;; @@
 (proof zero-elem-nat
     :script
   (have <a> (seteq nat (emptyset nat) (emptyset nat))
@@ -522,17 +435,13 @@
         :by ((elem-inductive-set nat nat-rules (emptyset nat) zero)
              <d> <e>))
   (qed <f>))
-;; @@
 
-;; @@
 (defthm succ-elem-nat
   "The successor of a natural number is a natural number."
   [[n nat]]
   (==> (elem nat n nat-set)
        (elem nat (succ n) nat-set)))
-;; @@
 
-;; @@
 (proof succ-elem-nat
     :script
   (assume [H (elem nat n nat-set)]
@@ -586,4 +495,3 @@
                                    (succ n))
                <a> <b>))
     (qed <c>)))
-;; @@
