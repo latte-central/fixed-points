@@ -1,16 +1,17 @@
-;;{
-;; ---
-;; title: 'The construction of Inductive Sets'
-;; author:
-;;  - '© 2016 Frederic Peschanski, Creative Commons CC-BY-SA 4.0'
-;; tags: [inductive sets, type theory, set theory, natural numbers]
-;; abstract: |
-;;    This document is both a construction and a detailed explanation of the
-;;    notion of inductive set in the context of type theory. It is a litterate
-;;    program for the LaTTe proof assistant.
-;; ---
-;;}
 
+---
+title: 'The construction of Inductive Sets'
+author:
+ - '© 2016 Frederic Peschanski, Creative Commons CC-BY-SA 4.0'
+tags: [inductive sets, type theory, set theory, natural numbers]
+abstract: |
+   This document is both a construction and a detailed explanation of the
+   notion of inductive set in the context of type theory. It is a litterate
+   program for the LaTTe proof assistant.
+---
+
+
+```clojure
 (ns fixed-points.inductive-sets
   (:refer-clojure :exclude [and or not set])
 
@@ -28,57 +29,61 @@
             [latte-sets.powerset :as pset
              :refer [powerset intersections]]))
 
-;;{
+```
 
-;; # Introduction
 
-;; In this document we discuss one possible formalization of *inductive sets*. The two main source of inspiration for this document is the book *Introduction to bisimulation and coinduction* by Davide Sangiorgi as well as the course notes by Glynn Winskel about discrete mathematics, cf. https://www.cl.cam.ac.uk/~gw104/.
+# Introduction
 
-;; The main motivation is this:
+In this document we discuss one possible formalization of *inductive sets*. The two main source of inspiration for this document is the book *Introduction to bisimulation and coinduction* by Davide Sangiorgi as well as the course notes by Glynn Winskel about discrete mathematics, cf. https://www.cl.cam.ac.uk/~gw104/.
 
-;; Inductive sets are omnipresent in both mathematics (e.g. Peano arithmetics, proof theory, etc.) and computer science (tree structures, recursive functions, etc.).  However, the underlying principles  are seldom if imprecisely documented. In particular, we will study how inductive sets can be built from set-theoretic principles.
+The main motivation is this:
 
-;; A further motivation is to elaborate the construction of inductive sets in the context of a proof assistant based on a type theory. This way, nothing that could be judged as a detail is left to change in the development. Moreover, all the proofs are checked by the computer.
-;;}
+Inductive sets are omnipresent in both mathematics (e.g. Peano arithmetics, proof theory, etc.) and computer science (tree structures, recursive functions, etc.).  However, the underlying principles  are seldom if imprecisely documented. In particular, we will study how inductive sets can be built from set-theoretic principles.
 
-;;{
-;; # Sets defined by inductive rules
+A further motivation is to elaborate the construction of inductive sets in the context of a proof assistant based on a type theory. This way, nothing that could be judged as a detail is left to change in the development. Moreover, all the proofs are checked by the computer.
 
-;; Inductively defined sets are most often described using logical rules. As an introduction to the topic,
-;; we will consider a few example of well-known inductive sets.
 
-;; A first example is the set of natural number, which is often described as the *least* set satisfying the rules below.
 
-;; $$\dfrac{}{0\in \mathbb{N}}  \quad \forall n. \dfrac{\\{n\\}\subseteq\mathbb{N}}{succ(n)\in \mathbb{N}}$$
+# Sets defined by inductive rules
 
-;; We shall see with all details what this definition means, formally.
+Inductively defined sets are most often described using logical rules. As an introduction to the topic,
+we will consider a few example of well-known inductive sets.
 
-;; Another example is the set of strings over an alphabet $\Sigma$, denoted by $\Sigma^*$.
+A first example is the set of natural number, which is often described as the *least* set satisfying the rules below.
 
-;; $$\dfrac{}{\epsilon\in \Sigma^*}  \quad \forall x. \forall a. a\in\Sigma \implies \dfrac{\{x\}\subseteq\Sigma^*}{a.x \in \Sigma^*}$$
+$$\dfrac{}{0\in \mathbb{N}}  \quad \forall n. \dfrac{\\{n\\}\subseteq\mathbb{N}}{succ(n)\in \mathbb{N}}$$
 
-;; A slightly different kind of inductive definition is provided by the notion of the *transitive closure of a relation*.
-;; If we suppose a relation $R$ (from a type $T$ to itself), then its transitive clojure, denoted by $R^+$, is the *least* relation satisfying:
+We shall see with all details what this definition means, formally.
 
-;; $$\dfrac{}{(a,b)\in R^+} \text{for any } (a,b) \in R \quad \dfrac{(a,b), (b,c) \subseteq R^+}{(a,c) \in R^+}$$
+Another example is the set of strings over an alphabet $\Sigma$, denoted by $\Sigma^*$.
 
-;; We are now looking for a general, type-theoretic, definition of these kinds of sets of rules.
+$$\dfrac{}{\epsilon\in \Sigma^*}  \quad \forall x. \forall a. a\in\Sigma \implies \dfrac{\{x\}\subseteq\Sigma^*}{a.x \in \Sigma^*}$$
 
-;; Given a type $T$, a rule instance on $T$ is of the form $(X,y)$ with $X$ a set of $T$-elements and $y$ a $T$-element. The intended meaning is that if $X$ is a subset of the inductive set, then we can deduce that $y$ is *also* an element.   Hence, a rule-based definition is a relation from powersets to sets.
-;;}
+A slightly different kind of inductive definition is provided by the notion of the *transitive closure of a relation*.
+If we suppose a relation $R$ (from a type $T$ to itself), then its transitive clojure, denoted by $R^+$, is the *least* relation satisfying:
 
+$$\dfrac{}{(a,b)\in R^+} \text{for any } (a,b) \in R \quad \dfrac{(a,b), (b,c) \subseteq R^+}{(a,c) \in R^+}$$
+
+We are now looking for a general, type-theoretic, definition of these kinds of sets of rules.
+
+Given a type $T$, a rule instance on $T$ is of the form $(X,y)$ with $X$ a set of $T$-elements and $y$ a $T$-element. The intended meaning is that if $X$ is a subset of the inductive set, then we can deduce that $y$ is *also* an element.   Hence, a rule-based definition is a relation from powersets to sets.
+
+
+```clojure
 (definition rules
   "The constructor for rule sets."
   [[T :type]]
   (==> (set T) T :type))
 
-;;{
-;; ## Closed sets
+```
 
-;; We next introduce the notion of a $R$-closed set, with $R$ a rule set as defined previously.
+## Closed sets
 
-;;}
+We next introduce the notion of a $R$-closed set, with $R$ a rule set as defined previously.
 
+
+
+```clojure
 (definition closed-set
   "The set `E` is `R`-closed."
   [[T :type] [R (rules T)] [E (set T)]]
@@ -88,48 +93,52 @@
              (subset T X E)
              (elem T y E)))))
 
-;;{
-;; The definition above provide a precise meaning for the intuitive understanding of the inductive rules.
-;; if a pair $(X, y)$ is a rule instance, i.e. an element of the relation $R$ in the definition, and if $X$ is a subset of an $R$-closed set (which is named $E$ in the definition),
-;; then $y$ has to be an element of $E$ also.
-;;}
+```
 
-;;{
-;; ## Inductive sets
-
-;; The formal definition of an inductive set defined by inference rules is based on the smallest set satisfying the relation.
-;; This set can be obtained by taking the intersection of all the $R$-closed sets of type $T$, i.e:
-
-;; $$\bigcup \{ E \mid E \text{ is an } R \text{-closed set}\}$$
-
-;; In LaTTe, this translates as follows.
-
-;;}
+The definition above provide a precise meaning for the intuitive understanding of the inductive rules.
+if a pair $(X, y)$ is a rule instance, i.e. an element of the relation $R$ in the definition, and if $X$ is a subset of an $R$-closed set (which is named $E$ in the definition),
+then $y$ has to be an element of $E$ also.
 
 
+
+## Inductive sets
+
+The formal definition of an inductive set defined by inference rules is based on the smallest set satisfying the relation.
+This set can be obtained by taking the intersection of all the $R$-closed sets of type $T$, i.e:
+
+$$\bigcup \{ E \mid E \text{ is an } R \text{-closed set}\}$$
+
+In LaTTe, this translates as follows.
+
+
+
+
+```clojure
 (definition inductive-set
   "The set inductively defined on `R`."
   [[T :type] [R (rules T)]]
   (intersections T (lambda [E (set T)]
                      (closed-set T R E))))
 
-;;{
-;; The definition of `intersections` (more precisely `latte-sets.powerset/intersections`) is as follows.
+```
 
-;; ```clojure
-;; (intersections T X)
-;; = (lambda [y T]
-;;      (forall [x (set T)]
-;;          (==> (set-elem T x X) (elem T y x))))
-;; ```
+The definition of `intersections` (more precisely `latte-sets.powerset/intersections`) is as follows.
 
-;; In the usual mathematical notation, this would be denoted by: $$\{y:T \mid \forall x\in X,~y\in x\}$$
+```clojure
+(intersections T X)
+= (lambda [y T]
+     (forall [x (set T)]
+         (==> (set-elem T x X) (elem T y x))))
+```
 
-;; Clearly there is a least fixed point hidden in the definition above, but in fact we do not need to make this explicit.
-;; One property that still remains important is that the inductive set is a lower bound for the set of $R$-closed sets.
+In the usual mathematical notation, this would be denoted by: $$\{y:T \mid \forall x\in X,~y\in x\}$$
 
-;;}
+Clearly there is a least fixed point hidden in the definition above, but in fact we do not need to make this explicit.
+One property that still remains important is that the inductive set is a lower bound for the set of $R$-closed sets.
 
+
+
+```clojure
 (defthm inductive-set-lower-bound
   "If `Q` is an `R`-closed set, then the inductive
   set defined on `R` is included in `Q`."
@@ -137,100 +146,124 @@
   (==> (closed-set T R Q)
        (subset T (inductive-set T R) Q)))
 
-;;{
-;; The proof follows.
+```
 
-;; -----
-;;}
+The proof follows.
 
+-----
+
+
+```clojure
 (proof inductive-set-lower-bound
     :script
-  ;;{
-  ;; Our main assumption is that the set $Q$ is $R$-closed.
-  ;;}
+```
+
+Our main assumption is that the set $Q$ is $R$-closed.
+
+```clojure
   (assume [H (closed-set T R Q)]
-    ;;{
-    ;; The expected property directly results from the property that
-    ;; generalized intersections are lower bounds for the sets the range over.
-    ;;}
+```
+
+The expected property directly results from the property that
+generalized intersections are lower bounds for the sets the range over.
+
+```clojure
     (have <a> (subset T (inductive-set T R) Q)
              :by ((pset/intersections-lower-bound T (lambda [E (set T)]
                                                         (closed-set T R E)))
                 Q H))
     (qed <a>)))
 
-;;{
-;; -----
+```
 
-;; Another very important property is that the inductive sets (hence the generalized intersection) is
-;; the least $R$-closed set, i.e. it is itself an $R$-closed set.
-;;}
+-----
 
+Another very important property is that the inductive sets (hence the generalized intersection) is
+the least $R$-closed set, i.e. it is itself an $R$-closed set.
+
+
+```clojure
 (defthm closed-inductive-set
   "The set inductively defined on `R` is `R`-closed."
   [[T :type] [R (rules T)]]
   (closed-set T R (inductive-set T R)))
 
-;;{
-;; This means :
-;; 
-;; ```clojure
-;; (forall [X (set T)]
-;;       (forall [y T]
-;;         (==> (R X y)
-;;              (subset T X (inductive-set T R))
-;;              (elem T y (inductive-set T R))))))
-;; ```
-;; 
-;; The proof is quite straightforward.
-;;}
+```
 
+This means :
+
+```clojure
+(forall [X (set T)]
+      (forall [y T]
+        (==> (R X y)
+             (subset T X (inductive-set T R))
+             (elem T y (inductive-set T R))))))
+```
+
+The proof is quite straightforward.
+
+
+```clojure
 (proof closed-inductive-set
     :script
-  ;;{
-  ;; We have four assumptions: the assumption set $X$ and the element $y$
-  ;; as well as the fact that they are in $R$. Moreover $X$ is assumed
-  ;; to be a subset of the inductive set.
-  ;;}
+```
+
+We have four assumptions: the assumption set $X$ and the element $y$
+as well as the fact that they are in $R$. Moreover $X$ is assumed
+to be a subset of the inductive set.
+
+```clojure
   (assume [X (set T)
            y T
            H1 (R X y)
            H2 (subset T X (inductive-set T R))]
-    ;;{
-    ;; Now consider an arbitrary set $Y$ that is $R$-closed.
-    ;;}
+```
+
+Now consider an arbitrary set $Y$ that is $R$-closed.
+
+```clojure
     (assume [Y (set T)
              HY (closed-set T R Y)]
-      ;;{
-      ;; We now that the inductive set is *below* $Y$ in the subset relation
-      ;;}
+```
+
+We now that the inductive set is *below* $Y$ in the subset relation
+
+```clojure
       (have a (subset T (inductive-set T R) Y)
             :by ((inductive-set-lower-bound T R Y) HY))
-      ;;{
-      ;; And by transitivity $X$ is below $Y$ (using hypothesis `H2`).
-      ;;}
+```
+
+And by transitivity $X$ is below $Y$ (using hypothesis `H2`).
+
+```clojure
       (have b (subset T X Y)
             :by ((set/subset-trans T X (inductive-set T R) Y)
                  H2 a))
-      ;;{
-      ;; Hence $y$ is an element of $Y$ because the later is $R$-closed.
-      ;;}
+```
+
+Hence $y$ is an element of $Y$ because the later is $R$-closed.
+
+```clojure
       (have c (elem T y Y) :by (HY X y H1 b))
-      ;;{
-      ;; And from this we reach the conclusion.
-      ;;}
+```
+
+And from this we reach the conclusion.
+
+```clojure
       (have d (forall [Y (set T)]
                     (==> (closed-set T R Y)
                          (elem T y Y)))
                :discharge [Y HY c]))
        (qed d)))
 
-;;{
-;; For convenience, we state the conditions for a term $y$ to
-;; be an element of the inductive sets defined by rules $R$.
-;; (with the trivial proof).
-;;}
+```
 
+For convenience, we state the conditions for a term $y$ to
+be an element of the inductive sets defined by rules $R$.
+(with the trivial proof).
+
+
+```clojure
 (defthm elem-inductive-set
   "Membership for inductive set"
   [[T :type] [R (rules T)] [X (set T)] [y T]]
@@ -246,12 +279,14 @@
             :by ((closed-inductive-set T R) X y H1 H2))
       (qed <a>)))
 
-;;{
-;; # Rule induction
+```
 
-;; The general principle of rule induction is then obtained as follows.
-;;}
+# Rule induction
 
+The general principle of rule induction is then obtained as follows.
+
+
+```clojure
 (defthm rule-induction
   "If a property `P` is `R`-closed, then each element of the
   inductive set verifies the property."
@@ -261,10 +296,12 @@
           (==> (elem T x (inductive-set T R))
                (P x)))))
 
-;;{
-;; The proof simply relies on the fact the the inductive-set is a lower bound.
-;;}
+```
 
+The proof simply relies on the fact the the inductive-set is a lower bound.
+
+
+```clojure
 (proof rule-induction
    :script
    (assume [H (closed-set T R P)]
@@ -272,17 +309,19 @@
              :by ((inductive-set-lower-bound T R P) H))
        (qed a)))
 
-;;{
-;; # Examples
-;;}
+```
 
-;;{
-;; ## The set of natural numbers
+# Examples
 
-;; We will now construct the set of natural number as an inductive
-;; set defined by rules.
-;;}
 
+
+## The set of natural numbers
+
+We will now construct the set of natural number as an inductive
+set defined by rules.
+
+
+```clojure
 (defaxiom nat
   ""
   []
@@ -504,3 +543,4 @@
                                    (succ n))
                <a> <b>))
     (qed <c>)))
+```
