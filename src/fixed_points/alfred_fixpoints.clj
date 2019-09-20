@@ -177,3 +177,56 @@ since we took `x` arbitrarily."
     (have up (upper-bound iR S x) :by <b>))
   (qed up))
 
+(definition least-element
+   [[R (rel ?T ?T)] [S (set ?T)] [l ?T]]
+   (and (elem l S)
+        (lower-bound R S l)))
+
+(definition glb
+  "The greatest lower bound `l` of a subset `S` relation `R`."
+  [[R (rel ?T ?T)] [S (set ?T)] [l ?T]]
+  (and (lower-bound R S l)
+       (forall [x T]
+          (==> (lower-bound R S x)
+               (R x l)))))
+
+(definition lub
+  "The least upper bound `u` of a subset `S` in relation `R`."
+  [[R (rel ?T ?T)] [S (set ?T)] [u ?T]]
+  (and (upper-bound R S u)
+       (forall [x T]
+          (==> (upper-bound R S x)
+               (R u x)))))
+
+(defthm glb-lub-dual [[R (rel ?T ?T)]]
+  (forall [S (set T)]
+      (forall [l T]
+         (==> (glb R S l)
+              (lub (rinverse R) S l)))))
+
+(proof 'glb-lub-dual-thm
+   (pose iR := (rinverse R))
+   "First let's state the main hypotheses."
+   (assume [S (set T)
+            l T
+            Hl (glb R S l)]
+      "From now on the inverse will be noted `R'`."
+      "A `glb` is a lower bound..."
+      (have <a1> (lower-bound R S l) :by (p/and-elim-left Hl))
+      "... and thus is is an upper bound for the inverse,
+which is the least part of the [[lub]] conjunction we need."
+      (have <a> (upper-bound iR S l) :by ((low-up-dual R S l) <a1>))
+      "Now let's assume we have `u` an upper bound in `R'`."
+      (assume [u T
+               Hu (upper-bound iR S u)]
+        "We trivially have that `l` is lower than `u` in `iR'`
+          (since it is greater in `R`)."
+        (have <b> (iR l u) :by ((p/and-elim-right Hl) u Hu)))
+   
+      "Thus we have the right part of the [[lub]] conjunction." 
+      (have <c> _ :by (p/and-intro <a> <b>)))
+   
+   "Hence we can conclude"
+   (qed <c>))
+
+
