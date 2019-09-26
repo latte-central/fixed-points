@@ -11,38 +11,38 @@
             [latte.utils :as u]
             [latte-prelude.fun :refer [injective surjective compose]]
             [latte-sets.core :refer [set elem set-equal emptyset forall-in] :as sets]
-            [latte-sets.rel :refer [rel]]
+            [latte-sets.rel :as rel :refer [rel]]
             [latte-prelude.equal :as eq :refer [equal]]
             [latte-prelude.prop :as p :refer [not and and* or absurd]]
             [latte-prelude.quant :refer [exists ex ex-elim] :as q]))
 
 
 (definition reflexive
-  [[R (rel ?T ?T)]]
+  [?T :type, R (rel T T)]
   (forall [x T] (R x x)))
 
 (definition transitive
-  [[R (rel ?T ?T)]]
+  [?T :type, R (rel T T)]
   (forall [x y z T]
     (==> (R x y)
          (R y z)
          (R x z))))
 
 (definition antisymmetric
-   [[R (rel ?T ?T)]]
+   [?T :type, R (rel T T)]
    (forall [x y T]
        (==> (R x y)
             (R y x)
             (equal x y))))
 
 (definition order
-  [[R (rel ?T ?T)]]
+  [?T :type, R (rel T T)]
   (and* (reflexive R)
         (transitive R)
         (antisymmetric R)))
 
 (definition ridentity
-   [[T :type]]
+   [T :type]
    (lambda [x T] (lambda [y T] (equal x y))))
 
 (type-of [T :type]
@@ -50,7 +50,7 @@
 ;; => (==> T T ✳)
 
 (defthm rid-refl
-  [[T :type]]
+  [T :type]
   (reflexive (ridentity T)))
 
 (proof 'rid-refl
@@ -65,7 +65,7 @@ since we took `x` arbitrarily."
   (qed <b>))
 
 (defthm rid-trans
-  [[T :type]]
+  [T :type]
   (transitive (ridentity T)))
 
 (proof 'rid-trans
@@ -80,7 +80,7 @@ since we took `x` arbitrarily."
    (qed <d>))
 
 (deflemma rid-antisym
-   [[T :type]]
+   [T :type]
    (antisymmetric (ridentity T)))
 
 (proof 'rid-antisym
@@ -92,14 +92,13 @@ since we took `x` arbitrarily."
   (qed <a>))
 
 
-
-
 (definition rinverse
-  [[R (rel ?T ?T)]]
+  [?T :type, R (rel T T)]
   (lambda [x T] (lambda [y T] (R y x))))
 
 
-(defthm rinv-order [[R (rel ?T ?T)]]
+(defthm rinv-order 
+  [?T :type, R (rel T T)]
   (==> (order R)
        (order (rinverse R))))
 
@@ -149,16 +148,16 @@ since we took `x` arbitrarily."
 
 (definition lower-bound
    "`l` is a lower bound for `X` in the ordering relation `R`."
-   [[R (rel ?T ?T)] [S (set ?T)] [l ?T]]
+   [?T :type, R (rel T T), S (set T), l T]
    (forall-in [e S] (R l e)))
 
 (definition upper-bound
 "`u` is an upper bound for set `S` in the ordering relation `R`."
-   [[R (rel ?T ?T)] [S (set ?T)] [u ?T]]
+   [?T :type, R (rel T T), S (set T), u T]
    (forall-in [e S] (R e u)))
 
 (defthm low-up-dual
-  [[R (rel ?T ?T)] [S (set ?T)] [x T]]
+   [?T :type, R (rel T T), S (set T), x T]
   (==> (lower-bound R S x)
        (upper-bound (rinverse R) S x)))
 
@@ -178,13 +177,13 @@ since we took `x` arbitrarily."
   (qed up))
 
 (definition least-element
-   [[R (rel ?T ?T)] [S (set ?T)] [l ?T]]
+   [?T :type, R (rel T T), S (set T), l T]
    (and (elem l S)
         (lower-bound R S l)))
 
 (definition glb
   "The greatest lower bound `l` of a subset `S` relation `R`."
-  [[R (rel ?T ?T)] [S (set ?T)] [l ?T]]
+   [?T :type, R (rel T T), S (set T), l T]
   (and (lower-bound R S l)
        (forall [x T]
           (==> (lower-bound R S x)
@@ -192,13 +191,14 @@ since we took `x` arbitrarily."
 
 (definition lub
   "The least upper bound `u` of a subset `S` in relation `R`."
-  [[R (rel ?T ?T)] [S (set ?T)] [u ?T]]
+  [?T :type, R (rel T T), S (set T), u T]  
   (and (upper-bound R S u)
        (forall [x T]
           (==> (upper-bound R S x)
                (R u x)))))
 
-(defthm glb-lub-dual [[R (rel ?T ?T)]]
+(defthm glb-lub-dual 
+  [?T :type, R (rel T T)]
   (forall [S (set T)]
       (forall [l T]
          (==> (glb R S l)
