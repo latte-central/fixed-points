@@ -91,6 +91,14 @@ since we took `x` arbitrarily."
     (have <a> (equal x y) :by Hxy))
   (qed <a>))
 
+(defthm rid-order 
+  [T :type]
+  (order (ridentity T)))
+
+(proof 'rid-order
+   (qed (p/and-intro* (rid-refl T) 
+                      (rid-trans T)
+                      (rid-antisym T))))
 
 (definition rinverse
   [?T :type, R (rel T T)]
@@ -180,6 +188,11 @@ since we took `x` arbitrarily."
    [?T :type, R (rel T T), S (set T), l T]
    (and (elem l S)
         (lower-bound R S l)))
+
+(definition greatest-element
+   [?T :type, R (rel T T), S (set T), u T]
+   (and (elem u S)
+        (upper-bound R S u)))
 
 (definition glb
   "The greatest lower bound `l` of a subset `S` relation `R`."
