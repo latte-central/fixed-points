@@ -1,4 +1,4 @@
-(defproject fixed-points "0.0.5"
+(defproject fixed-points "0.0.6"
   :description "A bit of fixed point theory (in LaTTe)."
   :url "https://github.com/fredokun/fixed-points.git"
   :license {:name "Creative Commons CC-BY-SA 4.0"

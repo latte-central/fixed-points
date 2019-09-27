@@ -242,4 +242,51 @@ which is the least part of the [[lub]] conjunction we need."
    "Hence we can conclude"
    (qed <c>))
 
+(deflemma glb-single
+  "Singleness of greateast lower bounds."
+  [?T :type, R (rel T T), X (set T)]
+  (==> (antisymmetric R)
+       (q/single (lambda [l T] (glb R X l)))))
 
+(proof 'glb-single-lemma
+  (pose P := (lambda [l T] (glb R X l)))
+  "These are all our assumptions:"
+  (assume [Hanti (antisymmetric R) 
+           l1 T, l2 T 
+           H1 (P l1) H2 (P l2)]
+    "We much show that l1 is equal to l2."
+    "First, these are two lower bounds for `R`."
+    (have <a> (lower-bound R X l1) :by (p/and-elim-left H1))
+    (have <b> (lower-bound R X l2) :by (p/and-elim-left H2))
+    "Now let's apply the *greatest* constraints."
+    "First, `l1` is greater than `l2`."
+    (have <c> (R l2 l1) :by ((p/and-elim-right H1) l2 <b>))
+    "Second, `l2` is greater than `l1`."
+    (have <d> (R l1 l2) :by ((p/and-elim-right H2) l1 <a>))
+    "Thus, by antisymmetry (our hypothesis `H`) `l1` and `l2` must be equal."
+    (have <e> (equal l1 l2) :by (Hanti l1 l2 <d> <c>)))
+  "And this is enough to conclude"
+  (qed <e>))
+
+
+(defthm glb-unique
+  "Unicity of greatest lower bounds."
+  [?T :type, R (rel T T), X (set T)]
+  (==> (antisymmetric R)
+       (exists [l T] (glb R X l))
+       (q/unique (lambda [l T] (glb R X l)))))
+
+(proof 'glb-unique-thm
+  (assume [Hanti _, Hex _]
+    (have <a> _ :by (p/and-intro Hex ((glb-single R X) Hanti))))
+  (qed <a>))
+
+
+(defthm lub-unique-by-duality
+  [?T :type, R (rel T T), X (set T)]
+  (==> (antisymmetric R)
+       (exists [l T] (glb R X l))
+       (q/unique (lambda [l T] (lub R X l)))))
+
+(proof 'lub-unique-by-duality-thm
+  (assume [Hanti _, ]))
